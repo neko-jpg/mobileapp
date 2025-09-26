@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'quest_log.dart';
 
@@ -15,7 +15,7 @@ extension GetQuestLogCollection on Isar {
 
 const QuestLogSchema = CollectionSchema(
   name: r'QuestLog',
-  id: 8640584853765075968,
+  id: 8640584853765076008,
   properties: {
     r'proofType': PropertySchema(
       id: 0,

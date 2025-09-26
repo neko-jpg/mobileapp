@@ -1,0 +1,15 @@
+{
+  "goodMorning": "Good Morning!",
+  "todaysQuests": "Today's Quests",
+  "todays3Recommendations": "Today's 3 recommendations",
+  "swapOrSnooze": "Swap or snooze can be changed with one tap.",
+  "replacedRecommendation": "Replaced the recommendation.",
+  "snoozedRecommendation": "Snoozed this recommendation until tomorrow.",
+  "noQuestsToday": "No Quests for today yet",
+  "chooseFromTemplate": "Choose from a template and start your 3-tap habit.",
+  "findAQuest": "Find a Quest",
+  "swapRecommendation": "Swap for another recommendation",
+  "snoozeUntilTomorrow": "Snooze until tomorrow",
+  "snoozed": "Snoozed",
+  "undo": "Undo"
+}

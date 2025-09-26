@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:minq/presentation/theme/minq_theme.dart';
 
 class ShellScreen extends StatelessWidget {
   const ShellScreen({super.key, required this.child});
 
   final Widget child;
 
-  // This method calculates the selected index based on the current route
   static int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/stats')) {
@@ -21,11 +21,9 @@ class ShellScreen extends StatelessWidget {
     if (location.startsWith('/settings')) {
       return 4;
     }
-    // Default to home
     return 0;
   }
 
-  // This method handles navigation when a bottom nav item is tapped
   void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
@@ -48,19 +46,19 @@ class ShellScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF13B6EC);
+    final tokens = context.tokens;
 
     return Scaffold(
       body: child,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _calculateSelectedIndex(context),
-        onTap: (index) => _onItemTapped(index, context),
-        type: BottomNavigationBarType.fixed, // Ensures all items are visible
-        selectedItemColor: primaryColor,
-        unselectedItemColor: Colors.grey.shade500,
-        selectedFontSize: 12.0,
-        unselectedFontSize: 12.0,
-        items: const [
+        onTap: (int index) => _onItemTapped(index, context),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: tokens.brandPrimary,
+        unselectedItemColor: tokens.textMuted,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),

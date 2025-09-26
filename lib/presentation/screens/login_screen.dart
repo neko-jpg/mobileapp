@@ -1,102 +1,97 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:minq/presentation/common/minq_copy.dart';
+import 'package:minq/presentation/theme/minq_theme.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF13B6EC);
+    final tokens = context.tokens;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
+      backgroundColor: tokens.background,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 350),
+            constraints: const BoxConstraints(maxWidth: 360),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+              children: <Widget>[
                 const Spacer(),
-                const Icon(
-                  Icons.checklist_rtl, // Using a similar icon
-                  color: primaryColor,
-                  size: 64,
+                Icon(
+                  Icons.checklist_rtl,
+                  color: tokens.brandPrimary,
+                  size: tokens.spacing(16),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: tokens.spacing(4)),
                 Text(
                   'MinQ',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: tokens.titleLarge.copyWith(
+                    color: tokens.textPrimary,
                     fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF101D22),
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Build habits, one mini-quest at a time.',
-                  style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
+                SizedBox(height: tokens.spacing(2)),
+                Text(
+                  MinqCopy.valuePropositionHeadline,
+                  style: tokens.bodyMedium.copyWith(color: tokens.textMuted),
                 ),
-                const SizedBox(height: 40),
+                SizedBox(height: tokens.spacing(10)),
                 _SocialLoginButton(
-                  icon: Icons.android, // Placeholder for Google icon
+                  icon: Icons.android,
                   text: 'Continue with Google',
                   onPressed: () => context.go('/'),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: tokens.spacing(3)),
                 _SocialLoginButton(
-                  icon: Icons.apple, // Placeholder for Apple icon
+                  icon: Icons.apple,
                   text: 'Continue with Apple',
                   onPressed: () => context.go('/'),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: tokens.spacing(3)),
                 _SocialLoginButton(
-                  icon: Icons.shield_outlined, // Using outlined version
+                  icon: Icons.shield_outlined,
                   text: 'Continue as Guest',
                   onPressed: () => context.go('/'),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: tokens.spacing(3)),
                 _SocialLoginButton(
-                  icon: Icons.mail_outline, // Using outlined version
+                  icon: Icons.mail_outline,
                   text: 'Continue with Email',
                   onPressed: () => context.go('/'),
                 ),
                 const Spacer(),
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.all(tokens.spacing(4)),
                   child: RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
+                      style: tokens.labelSmall.copyWith(
+                        color: tokens.textMuted,
                       ),
-                      children: [
-                        const TextSpan(text: 'By continuing, you agree to MinQ\'s '),
+                      children: <TextSpan>[
+                        const TextSpan(
+                          text: 'By continuing, you agree to MinQ\'s ',
+                        ),
                         TextSpan(
                           text: 'Terms of Service',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: primaryColor,
+                          style: tokens.labelSmall.copyWith(
+                            color: tokens.brandPrimary,
+                            fontWeight: FontWeight.w700,
                           ),
-                          recognizer: TapGestureRecognizer()..onTap = () {
-                            // TODO: Handle Terms of Service tap
-                            print('Terms of Service tapped');
-                          },
+                          recognizer: TapGestureRecognizer()..onTap = () {},
                         ),
                         const TextSpan(text: ' and '),
                         TextSpan(
                           text: 'Privacy Policy',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: primaryColor,
+                          style: tokens.labelSmall.copyWith(
+                            color: tokens.brandPrimary,
+                            fontWeight: FontWeight.w700,
                           ),
-                          recognizer: TapGestureRecognizer()..onTap = () {
-                            // TODO: Handle Privacy Policy tap
-                            print('Privacy Policy tapped');
-                          },
+                          recognizer: TapGestureRecognizer()..onTap = () {},
                         ),
                         const TextSpan(text: '.'),
                       ],
@@ -125,28 +120,30 @@ class _SocialLoginButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF334155),
-        minimumSize: const Size(double.infinity, 54),
+        backgroundColor: tokens.surface,
+        foregroundColor: tokens.textSecondary,
+        minimumSize: Size(double.infinity, tokens.spacing(13.5)),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFFE2E8F0)),
+          borderRadius: tokens.cornerLarge(),
+          side: BorderSide(color: tokens.brandPrimary.withValues(alpha: 0.18)),
         ),
-        elevation: 0.5,
-        shadowColor: Colors.black.withOpacity(0.1),
+        elevation: 0,
+        shadowColor: Colors.transparent,
       ),
       onPressed: onPressed,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 24),
-          const SizedBox(width: 12),
+        children: <Widget>[
+          Icon(icon, size: tokens.spacing(6)),
+          SizedBox(width: tokens.spacing(3)),
           Text(
             text,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 16,
+            style: tokens.bodyMedium.copyWith(
+              color: tokens.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),

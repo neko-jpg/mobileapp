@@ -1,127 +1,142 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:minq/presentation/theme/minq_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
+      backgroundColor: tokens.background,
       appBar: AppBar(
         title: Text(
           'Profile',
-          style: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF101D22),
-          ),
+          style: tokens.titleMedium.copyWith(color: tokens.textPrimary),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
-        elevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF101D22)),
+          icon: Icon(Icons.arrow_back, color: tokens.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildProfileHeader(),
-          const SizedBox(height: 24),
-          _buildStatsRow(),
-          const SizedBox(height: 32),
-          _buildAboutSection(),
-          const SizedBox(height: 24),
-          _buildMenu(context),
+        padding: EdgeInsets.all(tokens.spacing(5)),
+        children: <Widget>[
+          _buildProfileHeader(tokens),
+          SizedBox(height: tokens.spacing(6)),
+          _buildStatsRow(tokens),
+          SizedBox(height: tokens.spacing(8)),
+          _buildAboutSection(tokens),
+          SizedBox(height: tokens.spacing(6)),
+          _buildMenu(context, tokens),
         ],
       ),
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(MinqTheme tokens) {
     return Column(
-      children: [
-        const CircleAvatar(
-          radius: 48,
-          backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=3'), // Placeholder
+      children: <Widget>[
+        CircleAvatar(
+          radius: tokens.spacing(12),
+          backgroundImage: const NetworkImage(
+            'https://i.pravatar.cc/150?img=3',
+          ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: tokens.spacing(4)),
         Text(
           'Ethan',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: tokens.titleMedium.copyWith(color: tokens.textPrimary),
         ),
-        const SizedBox(height: 4),
-        const Text(
+        SizedBox(height: tokens.spacing(1)),
+        Text(
           '@ethan_123',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+          style: tokens.bodySmall.copyWith(color: tokens.textMuted),
         ),
-        const SizedBox(height: 8),
-        const Text(
+        SizedBox(height: tokens.spacing(2)),
+        Text(
           'Joined 2 months ago',
-          style: TextStyle(fontSize: 14, color: Colors.grey),
+          style: tokens.bodySmall.copyWith(color: tokens.textMuted),
         ),
       ],
     );
   }
 
-  Widget _buildStatsRow() {
-    const primaryColor = Color(0xFF13B6EC);
+  Widget _buildStatsRow(MinqTheme tokens) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: const [
-        _StatItem(label: 'Streak', value: '12', color: primaryColor),
-        _StatItem(label: 'Pairs', value: '3', color: primaryColor),
-        _StatItem(label: 'Quests', value: '2', color: primaryColor),
+      children: const <Widget>[
+        _StatItem(label: 'Streak', value: '12'),
+        _StatItem(label: 'Pairs', value: '3'),
+        _StatItem(label: 'Quests', value: '2'),
       ],
     );
   }
 
-  Widget _buildAboutSection() {
+  Widget _buildAboutSection(MinqTheme tokens) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: EdgeInsets.symmetric(horizontal: tokens.spacing(2)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: <Widget>[
           Text(
             'About',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: tokens.titleSmall.copyWith(color: tokens.textPrimary),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: tokens.spacing(2)),
+          Text(
             "I'm a software engineer who loves to code and build things. I'm also a big fan of productivity and habit-building, and I'm excited to be using MinQ to help me achieve my goals.",
-            style: TextStyle(fontSize: 15, color: Colors.grey, height: 1.5),
+            style: tokens.bodySmall.copyWith(
+              color: tokens.textMuted,
+              height: 1.5,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMenu(BuildContext context) {
+  Widget _buildMenu(BuildContext context, MinqTheme tokens) {
     return Card(
-      elevation: 0.5,
-      shadowColor: Colors.black.withOpacity(0.1),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.white,
-      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      color: tokens.surface,
+      shape: RoundedRectangleBorder(borderRadius: tokens.cornerLarge()),
       child: Column(
-        children: [
+        children: <Widget>[
           ListTile(
-            title: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.w600)),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+            title: Text(
+              'Edit Profile',
+              style: tokens.bodyMedium.copyWith(
+                color: tokens.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              size: tokens.spacing(4),
+              color: tokens.textMuted,
+            ),
             onTap: () {},
           ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
+          const Divider(height: 1),
           ListTile(
-            title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.w600)),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+            title: Text(
+              'Settings',
+              style: tokens.bodyMedium.copyWith(
+                color: tokens.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              size: tokens.spacing(4),
+              color: tokens.textMuted,
+            ),
             onTap: () => context.go('/settings'),
           ),
         ],
@@ -131,46 +146,36 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _StatItem extends StatelessWidget {
-  const _StatItem({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _StatItem({required this.label, required this.value});
 
   final String label;
   final String value;
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+      padding: EdgeInsets.symmetric(
+        vertical: tokens.spacing(3),
+        horizontal: tokens.spacing(6),
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
-            spreadRadius: 1,
-            blurRadius: 10,
-          ),
-        ],
+        color: tokens.surface,
+        borderRadius: tokens.cornerMedium(),
+        border: Border.all(color: tokens.brandPrimary.withValues(alpha: 0.18)),
+        boxShadow: tokens.shadowSoft,
       ),
       child: Column(
-        children: [
+        children: <Widget>[
           Text(
             value,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+            style: tokens.titleSmall.copyWith(color: tokens.brandPrimary),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: tokens.spacing(1)),
           Text(
             label,
-            style: const TextStyle(color: Colors.grey, fontSize: 14),
+            style: tokens.bodySmall.copyWith(color: tokens.textMuted),
           ),
         ],
       ),

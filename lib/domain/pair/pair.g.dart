@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'pair.dart';
 
@@ -15,7 +15,7 @@ extension GetPairCollection on Isar {
 
 const PairSchema = CollectionSchema(
   name: r'Pair',
-  id: -3124465371488267264,
+  id: -3124465371488267306,
   properties: {
     r'category': PropertySchema(
       id: 0,

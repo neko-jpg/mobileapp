@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'badge.dart';
 
@@ -15,7 +15,7 @@ extension GetBadgeCollection on Isar {
 
 const BadgeSchema = CollectionSchema(
   name: r'Badge',
-  id: -7407612234180284416,
+  id: -7407612234180284598,
   properties: {
     r'code': PropertySchema(
       id: 0,

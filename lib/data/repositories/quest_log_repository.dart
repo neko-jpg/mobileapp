@@ -32,7 +32,7 @@ class QuestLogRepository {
     DateTime? day,
     int targetCount = 3,
   }) async {
-    final logs = await countLogsForDay(uid, day ?? DateTime.now());
+    final logs = await countLogsForDay(uid, day ?? DateTime.now().toUtc());
     return logs >= targetCount;
   }
 
@@ -53,13 +53,13 @@ class QuestLogRepository {
 
     final uniqueDays =
         logs
-            .map((log) => DateTime(log.ts.year, log.ts.month, log.ts.day))
+            .map((log) => DateTime.utc(log.ts.year, log.ts.month, log.ts.day))
             .toSet()
             .toList()
           ..sort((a, b) => b.compareTo(a));
 
-    final today = DateTime.now();
-    final currentDate = DateTime(today.year, today.month, today.day);
+    final today = DateTime.now().toUtc();
+    final currentDate = DateTime.utc(today.year, today.month, today.day);
 
     if (uniqueDays.first.isBefore(
       currentDate.subtract(const Duration(days: 1)),
@@ -98,7 +98,7 @@ class QuestLogRepository {
     }
 
     final days = logs
-        .map((log) => DateTime(log.ts.year, log.ts.month, log.ts.day))
+        .map((log) => DateTime.utc(log.ts.year, log.ts.month, log.ts.day))
         .toSet()
         .toList()
       ..sort();
@@ -136,7 +136,7 @@ class QuestLogRepository {
     final logs = await getLogsForUser(uid);
     final logsByDay = groupBy(
       logs,
-      (QuestLog log) => DateTime(log.ts.year, log.ts.month, log.ts.day),
+      (QuestLog log) => DateTime.utc(log.ts.year, log.ts.month, log.ts.day),
     );
 
     return {

@@ -31,8 +31,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        path: '/record',
-        builder: (context, state) => const RecordScreen(),
+        path: '/record/:questId',
+        builder: (context, state) {
+          final questId = int.tryParse(state.pathParameters['questId'] ?? '') ?? 0;
+          return RecordScreen(questId: questId);
+        },
       ),
       GoRoute(
         path: '/celebration',

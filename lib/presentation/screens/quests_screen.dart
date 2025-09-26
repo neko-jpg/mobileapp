@@ -1,125 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:minq/presentation/common/minq_empty_state.dart';
+import 'package:minq/presentation/theme/minq_theme.dart';
 
-class QuestsScreen extends StatelessWidget {
-  const QuestsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF13B6EC);
-    final categories = ['Featured', 'All', 'Learning', 'Exercise', 'Tidying'];
-
-    return DefaultTabController(
-      length: categories.length,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF6F8F8),
-        appBar: AppBar(
-          title: Text(
-            'Mini-Quests',
-            style: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF101D22),
-            ),
-          ),
-          centerTitle: true,
-          backgroundColor: const Color(0xFFF6F8F8),
-          elevation: 0,
-          bottom: TabBar(
-            isScrollable: true,
-            indicatorColor: primaryColor,
-            labelColor: primaryColor,
-            unselectedLabelColor: Colors.grey.shade600,
-            labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
-            unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-            tabs: categories.map((String title) => Tab(text: title)).toList(),
-          ),
-        ),
-        body: TabBarView(
-          children: categories.map((String category) {
-            return _QuestCategoryList(category: category);
-          }).toList(),
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {},
-          label: const Text('Create Custom'),
-          icon: const Icon(Icons.add),
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-class _QuestCategoryList extends StatelessWidget {
-  const _QuestCategoryList({required this.category});
-
-  final String category;
-
-  @override
-  Widget build(BuildContext context) {
-    // In a real app, you would filter quests based on the category
-    return ListView(
-      padding: const EdgeInsets.all(16.0),
-      children: [
-        _buildSearchBar(),
-        const SizedBox(height: 24),
-        _buildSection(context, 'Featured'),
-        const SizedBox(height: 24),
-        _buildSection(context, 'Learning'),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: 'Search for templates...',
-        prefixIcon: const Icon(Icons.search, color: Colors.grey),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30.0),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-      ),
-    );
-  }
-
-  Widget _buildSection(BuildContext context, String title) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 16),
-        GridView.count(
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 2.5, // Adjust aspect ratio for card size
-          children: [
-            _QuestTemplateCard(icon: Icons.auto_stories, title: 'Read 1 page of a book', userCount: '12.3k users'),
-            _QuestTemplateCard(icon: Icons.fitness_center, title: 'Do 1 push-up', userCount: '11.8k users'),
-            _QuestTemplateCard(icon: Icons.self_improvement, title: 'Stretch for 1 minute', userCount: '9.7k users'),
-            _QuestTemplateCard(icon: Icons.bed, title: 'Make your bed', userCount: '8.2k users'),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _QuestTemplateCard extends StatelessWidget {
-  const _QuestTemplateCard({
+class _QuestTemplateData {
+  const _QuestTemplateData({
     required this.icon,
     required this.title,
     required this.userCount,
@@ -128,44 +12,304 @@ class _QuestTemplateCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String userCount;
+}
+
+const Map<String, List<_QuestTemplateData>> _templatesByCategory = {
+  'Featured': <_QuestTemplateData>[
+    _QuestTemplateData(
+      icon: Icons.auto_stories,
+      title: 'Read 1 page of a book',
+      userCount: '12.3k users',
+    ),
+    _QuestTemplateData(
+      icon: Icons.fitness_center,
+      title: 'Do 1 push-up',
+      userCount: '11.8k users',
+    ),
+    _QuestTemplateData(
+      icon: Icons.self_improvement,
+      title: 'Stretch for 1 minute',
+      userCount: '9.7k users',
+    ),
+  ],
+  'All': <_QuestTemplateData>[
+    _QuestTemplateData(
+      icon: Icons.auto_stories,
+      title: 'Read 1 page of a book',
+      userCount: '12.3k users',
+    ),
+    _QuestTemplateData(
+      icon: Icons.fitness_center,
+      title: 'Do 1 push-up',
+      userCount: '11.8k users',
+    ),
+    _QuestTemplateData(
+      icon: Icons.self_improvement,
+      title: 'Stretch for 1 minute',
+      userCount: '9.7k users',
+    ),
+    _QuestTemplateData(
+      icon: Icons.bed,
+      title: 'Make your bed',
+      userCount: '8.2k users',
+    ),
+  ],
+  'Learning': <_QuestTemplateData>[
+    _QuestTemplateData(
+      icon: Icons.library_books,
+      title: 'Review flashcards',
+      userCount: '5.1k users',
+    ),
+    _QuestTemplateData(
+      icon: Icons.edit_note,
+      title: 'Journal one insight',
+      userCount: '3.8k users',
+    ),
+  ],
+  'Exercise': <_QuestTemplateData>[
+    _QuestTemplateData(
+      icon: Icons.directions_walk,
+      title: 'Walk 500 steps',
+      userCount: '7.4k users',
+    ),
+    _QuestTemplateData(
+      icon: Icons.self_improvement,
+      title: '2-minute stretch',
+      userCount: '4.6k users',
+    ),
+  ],
+  'Tidying': <_QuestTemplateData>[],
+};
+
+class QuestsScreen extends StatefulWidget {
+  const QuestsScreen({super.key});
+
+  static const List<String> _categories = <String>[
+    'Featured',
+    'All',
+    'Learning',
+    'Exercise',
+    'Tidying',
+  ];
+
+  @override
+  State<QuestsScreen> createState() => _QuestsScreenState();
+}
+
+class _QuestsScreenState extends State<QuestsScreen> {
+  bool _showHelpBanner = true;
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF13B6EC);
+    final tokens = context.tokens;
+
+    return DefaultTabController(
+      length: _categories.length,
+      child: Scaffold(
+        backgroundColor: tokens.background,
+        appBar: AppBar(
+          title: Text(
+            'Quests',
+            style: tokens.titleMedium.copyWith(color: tokens.textPrimary),
+          ),
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          bottom: PreferredSize(
+            preferredSize: Size.fromHeight(tokens.spacing(12)),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TabBar(
+                isScrollable: true,
+                indicatorColor: tokens.brandPrimary,
+                labelColor: tokens.brandPrimary,
+                unselectedLabelColor: tokens.textMuted,
+                labelStyle: tokens.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+                unselectedLabelStyle: tokens.bodySmall,
+                tabs:
+                    _categories
+                        .map((String title) => Tab(text: title))
+                        .toList(),
+              ),
+            ),
+          ),
+        ),
+        body: Column(
+          children: <Widget>[
+            if (_showHelpBanner)
+              Card(
+                elevation: 0,
+                margin: EdgeInsets.all(tokens.spacing(5)),
+                color: tokens.brandPrimary.withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(
+                    borderRadius: tokens.cornerLarge()),
+                child: ListTile(
+                  leading: Icon(Icons.info_outline, color: tokens.brandPrimary),
+                  title: Text(
+                    'ここから新しいQuestを追加したり、既存のQuestを編集したりできます。',
+                    style: tokens.bodySmall
+                        .copyWith(color: tokens.textPrimary),
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.close, color: tokens.textPrimary),
+                    onPressed: () => setState(() => _showHelpBanner = false),
+                  ),
+                ),
+              ),
+            Expanded(
+              child: TabBarView(
+                children: QuestsScreen._categories.map((String category) {
+                  final templates = _templatesByCategory[category] ??
+                      const <_QuestTemplateData>[];
+                  return _QuestCategoryList(
+                    category: category,
+                    templates: templates,
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {},
+          label: Text(
+            'Create Custom',
+            style: tokens.bodyMedium.copyWith(
+              color: tokens.surface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          icon: Icon(Icons.add, color: tokens.surface),
+          backgroundColor: tokens.brandPrimary,
+        ),
+      ),
+    );
+  }
+}
+
+class _QuestCategoryList extends StatelessWidget {
+  const _QuestCategoryList({required this.category, required this.templates});
+
+  final String category;
+  final List<_QuestTemplateData> templates;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final hasTemplates = templates.isNotEmpty;
+
+    return ListView(
+      padding: EdgeInsets.all(tokens.spacing(5)),
+      children: <Widget>[
+        _buildSearchBar(tokens),
+        SizedBox(height: tokens.spacing(6)),
+        if (!hasTemplates)
+          MinqEmptyState(
+            icon: Icons.search_off,
+            title: '保存済みのQuestがありません',
+            message: 'テンプレートを検索するか、自分だけのQuestを作成しましょう。',
+            actionLabel: 'Questを作成',
+            onAction:
+                () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Custom quest creation coming soon.'),
+                  ),
+                ),
+          ),
+        if (hasTemplates)
+          GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 2.5,
+            ),
+            itemCount: templates.length,
+            itemBuilder: (BuildContext context, int index) {
+              final template = templates[index];
+              return _QuestTemplateCard(data: template);
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar(MinqTheme tokens) {
+    return TextField(
+      decoration: InputDecoration(
+        hintText: 'Search for templates…',
+        hintStyle: tokens.bodySmall.copyWith(color: tokens.textMuted),
+        prefixIcon: Icon(Icons.search, color: tokens.textMuted),
+        filled: true,
+        fillColor: tokens.surface,
+        border: OutlineInputBorder(
+          borderRadius: tokens.cornerXLarge(),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: EdgeInsets.symmetric(vertical: tokens.spacing(3)),
+      ),
+    );
+  }
+}
+
+class _QuestTemplateCard extends StatelessWidget {
+  const _QuestTemplateCard({required this.data});
+
+  final _QuestTemplateData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Card(
-      elevation: 0.5,
-      shadowColor: Colors.black.withOpacity(0.1),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
+      elevation: 0,
+      color: tokens.surface,
+      shape: RoundedRectangleBorder(borderRadius: tokens.cornerMedium()),
+      shadowColor: Colors.transparent,
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: EdgeInsets.all(tokens.spacing(3)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+          children: <Widget>[
             Row(
-              children: [
-                Icon(icon, color: primaryColor, size: 24),
-                const SizedBox(width: 8),
+              children: <Widget>[
+                Icon(
+                  data.icon,
+                  color: tokens.brandPrimary,
+                  size: tokens.spacing(6),
+                ),
+                SizedBox(width: tokens.spacing(2)),
                 Expanded(
                   child: Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                    data.title,
+                    style: tokens.bodyMedium.copyWith(
+                      color: tokens.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
             Row(
-              children: [
-                Icon(Icons.group_outlined, color: Colors.grey.shade600, size: 16),
-                const SizedBox(width: 4),
+              children: <Widget>[
+                Icon(
+                  Icons.group_outlined,
+                  color: tokens.textMuted,
+                  size: tokens.spacing(4),
+                ),
+                SizedBox(width: tokens.spacing(1)),
                 Text(
-                  userCount,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  data.userCount,
+                  style: tokens.bodySmall.copyWith(color: tokens.textMuted),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

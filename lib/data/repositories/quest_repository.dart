@@ -310,23 +310,37 @@ class QuestRepository {
   ];
 
   Future<List<Quest>> getAllQuests() async {
-    return _isar.quests.where().sortByCreatedAtDesc().findAll();
+    return _isar.quests
+        .filter()
+        .deletedAtIsNull()
+        .sortByCreatedAtDesc()
+        .findAll();
   }
 
   Future<List<Quest>> getTemplateQuests() async {
-    return _isar.quests.filter().ownerEqualTo('template').findAll();
+    return _isar.quests
+        .filter()
+        .ownerEqualTo('template')
+        .deletedAtIsNull()
+        .findAll();
   }
 
   Future<List<Quest>> getQuestsForOwner(String owner) async {
-    return _isar.quests.filter().ownerEqualTo(owner).findAll();
+    return _isar.quests
+        .filter()
+        .ownerEqualTo(owner)
+        .deletedAtIsNull()
+        .findAll();
   }
 
-  Future<Quest?> getQuestById(int id) => _isar.quests.get(id);
+  Future<Quest?> getQuestById(int id) =>
+      _isar.quests.filter().idEqualTo(id).deletedAtIsNull().findFirst();
 
   Future<void> addQuest(Quest quest) async {
     if (quest.estimatedMinutes <= 0) {
       quest.estimatedMinutes = 5;
     }
+    quest.status = QuestStatus.active;
     await _isar.writeTxn(() async {
       await _isar.quests.put(quest);
     });
@@ -334,7 +348,31 @@ class QuestRepository {
 
   Future<void> deleteQuest(int id) async {
     await _isar.writeTxn(() async {
-      await _isar.quests.delete(id);
+      final quest = await getQuestById(id);
+      if (quest != null) {
+        quest.deletedAt = DateTime.now();
+        await _isar.quests.put(quest);
+      }
+    });
+  }
+
+  Future<void> pauseQuest(int id) async {
+    await _isar.writeTxn(() async {
+      final quest = await getQuestById(id);
+      if (quest != null) {
+        quest.status = QuestStatus.paused;
+        await _isar.quests.put(quest);
+      }
+    });
+  }
+
+  Future<void> resumeQuest(int id) async {
+    await _isar.writeTxn(() async {
+      final quest = await getQuestById(id);
+      if (quest != null) {
+        quest.status = QuestStatus.active;
+        await _isar.quests.put(quest);
+      }
     });
   }
 
@@ -373,14 +411,14 @@ class QuestRepository {
           updates.add(current);
         }
       } else {
-        final quest =
-            Quest()
-              ..owner = 'template'
-              ..title = title
-              ..category = category
-              ..estimatedMinutes = minutes
-              ..iconKey = iconKey
-              ..createdAt = now;
+        final quest = Quest()
+          ..owner = 'template'
+          ..title = title
+          ..category = category
+          ..estimatedMinutes = minutes
+          ..iconKey = iconKey
+          ..status = QuestStatus.active
+          ..createdAt = now;
         updates.add(quest);
       }
     }

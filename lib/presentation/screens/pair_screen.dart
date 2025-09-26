@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:minq/presentation/common/minq_empty_state.dart';
+import 'package:minq/presentation/theme/minq_theme.dart';
 
 class PairScreen extends StatefulWidget {
   const PairScreen({super.key});
@@ -10,47 +11,74 @@ class PairScreen extends StatefulWidget {
 
 class _PairScreenState extends State<PairScreen> {
   bool _isPaired = false;
+  bool _showHelpBanner = true;
 
   void _findPartner() {
-    setState(() {
-      _isPaired = true;
-    });
+    setState(() => _isPaired = true);
   }
 
   void _unpair() {
-    setState(() {
-      _isPaired = false;
-    });
+    setState(() => _isPaired = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
+      backgroundColor: tokens.background,
       appBar: AppBar(
         title: Text(
           'Pair',
-          style: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF101D22),
-          ),
+          style: tokens.titleMedium.copyWith(color: tokens.textPrimary),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
+        surfaceTintColor: Colors.transparent,
+        actions: <Widget>[
           if (_isPaired)
             IconButton(
-              icon: const Icon(Icons.more_horiz),
-              onPressed: _unpair, // Simple unpair for demo
+              icon: Icon(Icons.more_horiz, color: tokens.textPrimary),
+              onPressed: _unpair,
             ),
         ],
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 500),
-        child: _isPaired
-            ? _PairedView(key: const ValueKey('paired'))
-            : _UnpairedView(key: const ValueKey('unpaired'), onFindPartner: _findPartner),
+      body: Column(
+        children: <Widget>[
+          if (_showHelpBanner)
+            Card(
+              elevation: 0,
+              margin: EdgeInsets.all(tokens.spacing(5)),
+              color: tokens.brandPrimary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(
+                  borderRadius: tokens.cornerLarge()),
+              child: ListTile(
+                leading: Icon(Icons.info_outline, color: tokens.brandPrimary),
+                title: Text(
+                  _isPaired
+                      ? 'PairとHigh-fiveを送り合ったり、定型メッセージで励まし合おう！'
+                      : '同じ目標を持つ仲間と匿名でPairを組んで、一緒に習慣を続けよう。',
+                  style: tokens.bodySmall
+                      .copyWith(color: tokens.textPrimary),
+                ),
+                trailing: IconButton(
+                  icon: Icon(Icons.close, color: tokens.textPrimary),
+                  onPressed: () => setState(() => _showHelpBanner = false),
+                ),
+              ),
+            ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: _isPaired
+                  ? const _PairedView(key: ValueKey('paired'))
+                  : _UnpairedView(
+                      key: const ValueKey('unpaired'),
+                      onFindPartner: _findPartner,
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -63,62 +91,75 @@ class _UnpairedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF13B6EC);
+    final tokens = context.tokens;
 
     return ListView(
-      padding: const EdgeInsets.all(16.0),
-      children: [
-        const SizedBox(height: 20),
-        const Icon(Icons.groups_outlined, color: primaryColor, size: 64),
-        const SizedBox(height: 16),
-        Text(
-          'Power Up with a Partner!',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+      padding: EdgeInsets.all(tokens.spacing(5)),
+      children: <Widget>[
+        SizedBox(height: tokens.spacing(5)),
+        MinqEmptyState(
+          icon: Icons.groups_outlined,
+          title: 'まだPairが見つかっていません',
+          message: '匿名でマッチして、お互いにハイタッチしながら習慣を続けましょう。',
+          actionLabel: 'Pairを探す',
+          onAction: onFindPartner,
         ),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              style: const TextStyle(fontSize: 16, color: Color(0xFF64748B), height: 1.5),
-              children: [
-                const TextSpan(text: 'Having an accountability partner increases your chance of success by '),
-                TextSpan(
-                  text: '95%',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.bold,
-                    color: primaryColor,
-                  ),
+        SizedBox(height: tokens.spacing(6)),
+        Card(
+          elevation: 0,
+          color: tokens.surface,
+          shape: RoundedRectangleBorder(borderRadius: tokens.cornerLarge()),
+          child: Padding(
+            padding: EdgeInsets.all(tokens.spacing(4)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'マッチするとできること',
+                  style: tokens.titleSmall.copyWith(color: tokens.textPrimary),
                 ),
-                const TextSpan(text: '. Stay anonymous and motivated.'),
+                SizedBox(height: tokens.spacing(3)),
+                _BenefitsRow(
+                  icon: Icons.bolt_outlined,
+                  text: 'お互いの達成を即ハイタッチで祝える',
+                ),
+                SizedBox(height: tokens.spacing(2)),
+                _BenefitsRow(
+                  icon: Icons.chat_bubble_outline,
+                  text: 'テンプレメッセージで気軽に声かけ',
+                ),
+                SizedBox(height: tokens.spacing(2)),
+                _BenefitsRow(
+                  icon: Icons.lock_outline,
+                  text: '匿名プロファイルで気軽に始められる',
+                ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 32),
-        // Other widgets like invite code and random match would go here
-        // For brevity, we'll just have the main button
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 56),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            elevation: 4,
-            shadowColor: primaryColor.withOpacity(0.3),
-          ),
-          onPressed: onFindPartner,
+      ],
+    );
+  }
+}
+
+class _BenefitsRow extends StatelessWidget {
+  const _BenefitsRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return Row(
+      children: <Widget>[
+        Icon(icon, size: tokens.spacing(6), color: tokens.brandPrimary),
+        SizedBox(width: tokens.spacing(3)),
+        Expanded(
           child: Text(
-            'Find a Partner',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            text,
+            style: tokens.bodySmall.copyWith(color: tokens.textPrimary),
           ),
         ),
       ],
@@ -131,67 +172,74 @@ class _PairedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF13B6EC);
+    final tokens = context.tokens;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(tokens.spacing(5)),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(height: 20),
-          const CircleAvatar(
-            radius: 64,
-            backgroundColor: Color(0xFFE0F7FA),
-            child: Icon(Icons.person_off_outlined, size: 64, color: primaryColor),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Anonymous Partner',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
+        children: <Widget>[
+          SizedBox(height: tokens.spacing(5)),
+          CircleAvatar(
+            radius: tokens.spacing(16),
+            backgroundColor: tokens.brandPrimary.withValues(alpha: 0.12),
+            child: Icon(
+              Icons.person_off_outlined,
+              size: tokens.spacing(16),
+              color: tokens.brandPrimary,
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Paired for "Meditate" Quest',
-            style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
+          SizedBox(height: tokens.spacing(4)),
+          Text(
+            'Anonymous Partner',
+            style: tokens.titleMedium.copyWith(color: tokens.textPrimary),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: tokens.spacing(1)),
+          Text(
+            'Paired for "Meditate" Quest',
+            style: tokens.bodySmall.copyWith(color: tokens.textMuted),
+          ),
+          SizedBox(height: tokens.spacing(8)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               shape: const CircleBorder(),
-              padding: const EdgeInsets.all(40),
-              backgroundColor: primaryColor,
-              foregroundColor: Colors.white,
-              elevation: 8,
-              shadowColor: primaryColor.withOpacity(0.4),
+              padding: EdgeInsets.all(tokens.spacing(10)),
+              backgroundColor: tokens.brandPrimary,
+              foregroundColor: tokens.surface,
+              elevation: 6,
+              shadowColor: tokens.brandPrimary.withValues(alpha: 0.32),
             ),
-            onPressed: () { /* TODO: Handle High Five */ },
-            child: const Column(
+            onPressed: () {},
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.back_hand_outlined, size: 60),
-                SizedBox(height: 8),
-                Text('High Five!', style: TextStyle(fontWeight: FontWeight.bold)),
+              children: <Widget>[
+                Icon(Icons.back_hand_outlined, size: tokens.spacing(15)),
+                SizedBox(height: tokens.spacing(2)),
+                Text(
+                  'High-five',
+                  style: tokens.bodyMedium.copyWith(
+                    color: tokens.surface,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: tokens.spacing(10)),
           Text(
             'Send a quick message:',
-            style: TextStyle(fontSize: 15, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+            style: tokens.bodySmall.copyWith(color: tokens.textMuted),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: tokens.spacing(4)),
           Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            spacing: tokens.spacing(3),
+            runSpacing: tokens.spacing(3),
             alignment: WrapAlignment.center,
-            children: [
-              _QuickMessageChip(text: 'You\'re doing great!'),
+            children: const <Widget>[
+              _QuickMessageChip(text: "You're doing great!"),
               _QuickMessageChip(text: 'Keep it up!'),
-              _QuickMessageChip(text: 'Let\'s finish strong.'),
+              _QuickMessageChip(text: "Let's finish strong."),
               _QuickMessageChip(text: 'I completed my goal!'),
             ],
           ),
@@ -203,19 +251,31 @@ class _PairedView extends StatelessWidget {
 
 class _QuickMessageChip extends StatelessWidget {
   const _QuickMessageChip({required this.text});
+
   final String text;
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF13B6EC);
+    final tokens = context.tokens;
+
     return ActionChip(
-      label: Text(text),
-      onPressed: () { /* TODO: Handle message send */ },
-      backgroundColor: Colors.white,
-      labelStyle: const TextStyle(color: primaryColor, fontWeight: FontWeight.w600),
-      side: BorderSide(color: primaryColor.withOpacity(0.5)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      label: Text(
+        text,
+        style: tokens.bodySmall.copyWith(
+          color: tokens.brandPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      onPressed: () {},
+      backgroundColor: tokens.surface,
+      side: BorderSide(color: tokens.brandPrimary.withValues(alpha: 0.4)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(tokens.radiusLarge),
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: tokens.spacing(3),
+        vertical: tokens.spacing(2),
+      ),
     );
   }
 }

@@ -2,6 +2,11 @@
 
 part 'quest.g.dart';
 
+enum QuestStatus {
+  active,
+  paused,
+}
+
 @Collection()
 class Quest {
   Quest(); // Empty constructor for Isar
@@ -16,5 +21,9 @@ class Quest {
 
   String? iconKey;
 
+  @Enumerated(EnumType.name)
+  late QuestStatus status;
+
   late DateTime createdAt;
+  DateTime? deletedAt;
 }

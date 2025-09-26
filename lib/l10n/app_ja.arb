@@ -1,0 +1,15 @@
+{
+  "goodMorning": "おはようございます！",
+  "todaysQuests": "今日のQuest",
+  "todays3Recommendations": "今日のおすすめ3件",
+  "swapOrSnooze": "スワップまたはスヌーズはワンタップで変更できます。",
+  "replacedRecommendation": "おすすめを入れ替えました。",
+  "snoozedRecommendation": "このおすすめを明日までスヌーズしました。",
+  "noQuestsToday": "今日のQuestはまだありません",
+  "chooseFromTemplate": "テンプレートから選んで、3タップ習慣をはじめましょう。",
+  "findAQuest": "Questを探す",
+  "swapRecommendation": "別のおすすめに入れ替え",
+  "snoozeUntilTomorrow": "明日までスヌーズ",
+  "snoozed": "スヌーズ済み",
+  "undo": "元に戻す"
+}

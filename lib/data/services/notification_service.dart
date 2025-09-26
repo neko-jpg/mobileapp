@@ -1,4 +1,6 @@
-﻿import 'package:flutter/foundation.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -6,15 +8,33 @@ import 'package:timezone/timezone.dart' as tz;
 class NotificationService {
   NotificationService();
 
-  static const List<String> defaultReminderTimes = ['07:30', '21:30', '18:30'];
+  static const List<String> defaultReminderTimes = ['07:30', '18:30', '21:30'];
   static const int _recurringNotificationBaseId = 200;
   static const int _auxiliaryNotificationId = 300;
+  static const int _snoozeNotificationId = 400;
+  static const String _recordRoutePayload = '/record';
+
+  static const String snoozeActionId_10m = 'snooze_10m';
+  static const String snoozeActionId_1h = 'snooze_1h';
+  static const String snoozeActionId_1d = 'snooze_1d';
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+  final StreamController<String> _tapController =
+      StreamController<String>.broadcast();
+
   bool _initialized = false;
+  String? _initialPayload;
 
   bool get _supportsLocalNotifications => !kIsWeb;
+
+  Stream<String> get notificationTapStream => _tapController.stream;
+
+  Future<String?> takeInitialPayload() async {
+    final payload = _initialPayload;
+    _initialPayload = null;
+    return payload;
+  }
 
   Future<bool> init() async {
     if (!_supportsLocalNotifications) {
@@ -23,16 +43,33 @@ class NotificationService {
 
     if (!_initialized) {
       tz.initializeTimeZones();
+      final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+      _initialPayload = launchDetails?.notificationResponse?.payload;
+
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
       );
       const initializationSettings = InitializationSettings(
         android: androidSettings,
       );
-      await _plugin.initialize(initializationSettings);
+      await _plugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (details) {
+          if (details.actionId != null &&
+              details.actionId!.startsWith('snooze')) {
+            _handleSnooze(details.actionId!, details.payload);
+          } else {
+            final payload = details.payload;
+            if (payload != null && payload.isNotEmpty) {
+              _tapController.add(payload);
+            }
+          }
+        },
+      );
       _initialized = true;
     }
-    return requestPermission();
+    final granted = await requestPermission();
+    return granted;
   }
 
   Future<bool> requestPermission() async {
@@ -93,11 +130,16 @@ class NotificationService {
             channelDescription: '続けやすいタイミングでミニクエをお知らせします。',
             importance: Importance.high,
             priority: Priority.high,
+            actions: [
+              AndroidNotificationAction(snoozeActionId_10m, '+10分'),
+              AndroidNotificationAction(snoozeActionId_1h, '+1時間'),
+              AndroidNotificationAction(snoozeActionId_1d, '明日'),
+            ],
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-
         matchDateTimeComponents: DateTimeComponents.time,
+        payload: _recordRoutePayload,
       );
     }
   }
@@ -113,7 +155,7 @@ class NotificationService {
     await _plugin.zonedSchedule(
       _auxiliaryNotificationId,
       'あと1つだけやってみよう',
-      '今日のミニクエがまだなら、今こそハイファイブをもらいにいこう。',
+      '今日のミニQuestがまだなら、今こそHigh-fiveをもらいにいこう。',
       _nextInstance(parsed.$1, parsed.$2),
       const NotificationDetails(
         android: AndroidNotificationDetails(
@@ -125,7 +167,44 @@ class NotificationService {
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      payload: _recordRoutePayload,
+    );
+  }
 
+  Future<void> _handleSnooze(String actionId, String? payload) async {
+    Duration snoozeDuration;
+    switch (actionId) {
+      case snoozeActionId_10m:
+        snoozeDuration = const Duration(minutes: 10);
+        break;
+      case snoozeActionId_1h:
+        snoozeDuration = const Duration(hours: 1);
+        break;
+      case snoozeActionId_1d:
+        snoozeDuration = const Duration(days: 1);
+        break;
+      default:
+        return;
+    }
+
+    final snoozedTime = tz.TZDateTime.now(tz.local).add(snoozeDuration);
+
+    await _plugin.zonedSchedule(
+      _snoozeNotificationId,
+      'Snoozed: MinQからのお知らせ',
+      '時間になりました。ミニQuestをRecordしましょう。',
+      snoozedTime,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'minq_snooze_channel',
+          'MinQ スヌーズしたリマインダー',
+          channelDescription: 'スヌーズしたリマインダーです。',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: payload,
     );
   }
 
@@ -187,6 +266,8 @@ class NotificationService {
       case 0:
         return '朝一番のミニクエ時間';
       case 1:
+        return '昼下がりのリセット';
+      case 2:
         return 'おやすみ前の振り返り';
       default:
         return 'MinQからのお知らせ';
@@ -198,9 +279,12 @@ class NotificationService {
       case 0:
         return '最初のミニクエで勢いをつけましょう。まずは1分でOK！';
       case 1:
-        return '今日の記録をまとめて、ストリークを伸ばそう。';
+        return '小さなタスクで午後の集中力を取り戻しましょう。';
+      case 2:
+        return '今日のRecordをまとめて、ストリークを伸ばそう。';
       default:
-        return 'ミニクエを続けて、ペアにハイファイブを送りましょう。';
+        return 'ミニQuestを続けて、PairにHigh-fiveを送りましょう。';
     }
   }
 }
+

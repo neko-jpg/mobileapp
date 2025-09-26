@@ -1,4 +1,4 @@
-﻿// GENERATED CODE - DO NOT MODIFY BY HAND
+// GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'user.dart';
 
@@ -15,7 +15,7 @@ extension GetUserCollection on Isar {
 
 const UserSchema = CollectionSchema(
   name: r'User',
-  id: -7838171048429978624,
+  id: -7838171048429979076,
   properties: {
     r'createdAt': PropertySchema(
       id: 0,
@@ -65,7 +65,7 @@ const UserSchema = CollectionSchema(
   idName: r'id',
   indexes: {
     r'uid': IndexSchema(
-      id: 8193695471701937152,
+      id: 8193695471701937315,
       name: r'uid',
       unique: true,
       replace: true,

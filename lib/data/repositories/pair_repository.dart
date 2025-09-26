@@ -35,7 +35,26 @@ class PairRepository {
     });
   }
 
+  Future<void> leavePair(String pairId, String leavingUserId) async {
+    final pairDoc = await _firestore.collection('pairs').doc(pairId).get();
+    if (!pairDoc.exists) return;
+
+    final members = List<String>.from(pairDoc.data()!['members']);
+    final otherUserId = members.firstWhere((id) => id != leavingUserId);
+
+    await _firestore.collection('pairs').doc(pairId).delete();
+    await _deletePairAssignment(leavingUserId);
+    await _deletePairAssignment(otherUserId);
+  }
+
   Future<String?> requestRandomPair(String uid, String category) async {
+    // First, check if the user is already in a pair.
+    final assignment = await fetchAssignment(uid);
+    if (assignment != null) {
+      // User is already in a pair, so they can't request a new one.
+      return null;
+    }
+
     final queueDoc = _firestore.collection('pair_queue').doc(category);
     final pairRef = _firestore.collection('pairs').doc();
 
@@ -56,6 +75,14 @@ class PairRepository {
           'waitingUid': uid,
           'createdAt': FieldValue.serverTimestamp(),
         });
+        return null;
+      }
+
+      // Check for blocks
+      final blocked = await _isBlocked(uid, waitingUid);
+      if (blocked) {
+        // Can't pair with a blocked user. For now, just return null.
+        // A more sophisticated implementation might try to find another user.
         return null;
       }
 
@@ -123,6 +150,12 @@ class PairRepository {
         return null;
       }
 
+      // Check for blocks
+      final blocked = await _isBlocked(joinerUid, ownerUid);
+      if (blocked) {
+        return null;
+      }
+
       transaction.delete(inviteRef);
       return '$ownerUid::$category';
     });
@@ -133,6 +166,31 @@ class PairRepository {
 
     final parts = result.split('::');
     return createPair(parts[0], joinerUid, parts[1]);
+  }
+
+  Future<void> blockUser(String blockerUid, String blockedUid) async {
+    await _firestore
+        .collection('blocks')
+        .doc('$blockerUid-$blockedUid')
+        .set({
+      'blocker': blockerUid,
+      'blocked': blockedUid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> unblockUser(String blockerUid, String blockedUid) async {
+    await _firestore.collection('blocks').doc('$blockerUid-$blockedUid').delete();
+  }
+
+  Future<void> reportUser(
+      String reporterUid, String reportedUid, String reason) async {
+    await _firestore.collection('reports').add({
+      'reporter': reporterUid,
+      'reported': reportedUid,
+      'reason': reason,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 
   Future<Map<String, dynamic>?> fetchAssignment(String uid) async {
@@ -146,6 +204,22 @@ class PairRepository {
       'pairId': pairId,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  Future<void> _deletePairAssignment(String uid) async {
+    await _firestore.collection('pair_assignments').doc(uid).delete();
+  }
+
+  Future<bool> _isBlocked(String uid1, String uid2) async {
+    final block1 =
+        await _firestore.collection('blocks').doc('$uid1-$uid2').get();
+    if (block1.exists) return true;
+
+    final block2 =
+        await _firestore.collection('blocks').doc('$uid2-$uid1').get();
+    if (block2.exists) return true;
+
+    return false;
   }
 
   String _generateInviteCode() {

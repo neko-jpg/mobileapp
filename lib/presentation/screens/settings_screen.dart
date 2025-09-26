@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:minq/presentation/common/minq_empty_state.dart';
+import 'package:minq/presentation/theme/minq_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,96 +12,167 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _pushNotifications = true;
   bool _dataSync = false;
+  bool _showHelpBanner = true;
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    const hasScheduledReminders = false;
+    const hasBlockedUsers = false;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F8),
+      backgroundColor: tokens.background,
       appBar: AppBar(
         title: Text(
           'Settings',
-          style: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF101D22),
-          ),
+          style: tokens.titleMedium.copyWith(color: tokens.textPrimary),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
-        elevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
+        padding: EdgeInsets.all(tokens.spacing(5)),
+        children: <Widget>[
+          if (_showHelpBanner)
+            Card(
+              elevation: 0,
+              margin: EdgeInsets.only(bottom: tokens.spacing(4)),
+              color: tokens.brandPrimary.withValues(alpha: 0.1),
+              shape: RoundedRectangleBorder(
+                  borderRadius: tokens.cornerLarge()),
+              child: ListTile(
+                leading: Icon(Icons.info_outline, color: tokens.brandPrimary),
+                title: Text(
+                  '通知のタイミングやデータ連携など、アプリの挙動をカスタマイズできます。',
+                  style: tokens.bodySmall
+                      .copyWith(color: tokens.textPrimary),
+                ),
+                trailing: IconButton(
+                  icon: Icon(Icons.close, color: tokens.textPrimary),
+                  onPressed: () => setState(() => _showHelpBanner = false),
+                ),
+              ),
+            ),
+          if (!hasScheduledReminders)
+            Padding(
+              padding: EdgeInsets.only(bottom: tokens.spacing(4)),
+              child: MinqEmptyState(
+                icon: Icons.notifications_off_outlined,
+                title: '通知時間が未設定です',
+                message: '朝・夜など、自分がチェックしやすいタイミングを登録すると、ミスせず続けられます。',
+                actionLabel: '通知時間を設定',
+                onAction: () {},
+              ),
+            ),
           _SettingsSection(
             title: 'General Settings',
-            tiles: [
+            tiles: <Widget>[
               _SettingsTile(
                 title: 'Push Notifications',
                 subtitle: 'Reminders & partner updates',
                 trailing: Switch(
                   value: _pushNotifications,
-                  onChanged: (value) => setState(() => _pushNotifications = value),
-                  activeColor: const Color(0xFF13B6EC),
+                  onChanged:
+                      (bool value) =>
+                          setState(() => _pushNotifications = value),
+                  activeColor: tokens.brandPrimary,
                 ),
               ),
               _SettingsTile(
                 title: 'Notification Times',
-                trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+                trailing: Icon(
+                  Icons.arrow_forward_ios,
+                  size: tokens.spacing(4),
+                  color: tokens.textMuted,
+                ),
                 onTap: () {},
               ),
               _SettingsTile(
                 title: 'Sounds',
-                trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+                trailing: Icon(
+                  Icons.arrow_forward_ios,
+                  size: tokens.spacing(4),
+                  color: tokens.textMuted,
+                ),
                 onTap: () {},
               ),
             ],
           ),
           _SettingsSection(
             title: 'Privacy & Data',
-            tiles: [
+            tiles: <Widget>[
+              if (!hasBlockedUsers)
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: tokens.spacing(2),
+                    vertical: tokens.spacing(2),
+                  ),
+                  child: MinqEmptyState(
+                    icon: Icons.shield_outlined,
+                    title: 'ブロック中のユーザーはありません',
+                    message: '困ったときは各Pair画面のメニューから通報・ブロックできます。',
+                  ),
+                ),
               _SettingsTile(
                 title: 'Data Sync',
                 subtitle: 'Keep data synced across devices',
                 trailing: Switch(
                   value: _dataSync,
-                  onChanged: (value) => setState(() => _dataSync = value),
-                  activeColor: const Color(0xFF13B6EC),
+                  onChanged: (bool value) => setState(() => _dataSync = value),
+                  activeColor: tokens.brandPrimary,
                 ),
               ),
               _SettingsTile(
                 title: 'Manage Blocked Users',
-                trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+                trailing: Icon(
+                  Icons.arrow_forward_ios,
+                  size: tokens.spacing(4),
+                  color: tokens.textMuted,
+                ),
                 onTap: () {},
               ),
               _SettingsTile(
                 title: 'Export My Data',
-                trailing: const Icon(Icons.download_outlined, color: Colors.grey),
+                trailing: Icon(
+                  Icons.download_outlined,
+                  color: tokens.textMuted,
+                ),
                 onTap: () {},
               ),
               _SettingsTile(
                 title: 'Delete Account & Data',
                 titleColor: Colors.red.shade600,
-                trailing: Icon(Icons.delete_outline, color: Colors.red.shade600),
+                trailing: Icon(
+                  Icons.delete_outline,
+                  color: Colors.red.shade600,
+                ),
                 onTap: () {},
               ),
             ],
           ),
           _SettingsSection(
             title: 'About MinQ',
-            tiles: [
+            tiles: const <Widget>[
               _SettingsTile(
                 title: 'Terms of Service',
-                trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
-                onTap: () {},
+                trailing: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey,
+                ),
               ),
               _SettingsTile(
                 title: 'Privacy Policy',
-                trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
-                onTap: () {},
+                trailing: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey,
+                ),
               ),
               _SettingsTile(
                 title: 'App Version',
-                trailing: const Text('1.0.0', style: TextStyle(color: Colors.grey)),
+                trailing: Text('1.0.0', style: TextStyle(color: Colors.grey)),
               ),
             ],
           ),
@@ -111,25 +183,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
 }
 
 class _SettingsSection extends StatelessWidget {
+  const _SettingsSection({required this.title, required this.tiles});
+
   final String title;
   final List<Widget> tiles;
 
-  const _SettingsSection({required this.title, required this.tiles});
-
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+      children: <Widget>[
         Padding(
-          padding: const EdgeInsets.only(left: 8.0, top: 24, bottom: 8),
+          padding: EdgeInsets.only(
+            left: tokens.spacing(2),
+            top: tokens.spacing(6),
+            bottom: tokens.spacing(2),
+          ),
           child: Text(
             title,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF101D22),
-            ),
+            style: tokens.titleSmall.copyWith(color: tokens.textPrimary),
           ),
         ),
         Column(children: tiles),
@@ -139,12 +213,6 @@ class _SettingsSection extends StatelessWidget {
 }
 
 class _SettingsTile extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-  final Color? titleColor;
-
   const _SettingsTile({
     required this.title,
     this.subtitle,
@@ -153,24 +221,38 @@ class _SettingsTile extends StatelessWidget {
     this.titleColor,
   });
 
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final Color? titleColor;
+
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Card(
-      elevation: 0.5,
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      shadowColor: Colors.black.withOpacity(0.1),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.white,
+      elevation: 0,
+      margin: EdgeInsets.symmetric(vertical: tokens.spacing(1.5)),
+      color: tokens.surface,
+      shape: RoundedRectangleBorder(borderRadius: tokens.cornerLarge()),
       child: ListTile(
         onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: tokens.cornerLarge()),
         title: Text(
           title,
-          style: TextStyle(fontWeight: FontWeight.w600, color: titleColor),
+          style: tokens.bodyMedium.copyWith(
+            color: titleColor ?? tokens.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        subtitle: subtitle != null
-            ? Text(subtitle!, style: const TextStyle(color: Colors.grey))
-            : null,
+        subtitle:
+            subtitle != null
+                ? Text(
+                  subtitle!,
+                  style: tokens.bodySmall.copyWith(color: tokens.textMuted),
+                )
+                : null,
         trailing: trailing,
       ),
     );
