@@ -101,39 +101,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _snoozeEnabled = true;
   bool _dismissedPermissionBanner = false;
   bool _dismissedTimeBanner = false;
-  late final ProviderSubscription<FeatureFlags> _featureFlagsSubscription;
 
   @override
   void initState() {
     super.initState();
     final flags = ref.read(featureFlagsProvider);
     _snoozeEnabled = flags.homeSuggestionSnoozeEnabled;
-    _featureFlagsSubscription = ref.listenManual<FeatureFlags>(
-      featureFlagsProvider,
-      (previous, next) {
-        if (previous?.homeSuggestionSnoozeEnabled !=
-            next.homeSuggestionSnoozeEnabled) {
-          if (!mounted) {
-            return;
-          }
-          setState(() {
-            _snoozeEnabled = next.homeSuggestionSnoozeEnabled;
-          });
-        }
-      },
-    );
-    _featureFlagsSubscription.read();
     Future<void>.delayed(const Duration(milliseconds: 600), () {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _featureFlagsSubscription.close();
-    super.dispose();
   }
 
   void _swapSuggestion(int slot) {
@@ -170,6 +148,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final startupState = ref.watch(appStartupProvider);
     final permissionGranted = ref.watch(notificationPermissionProvider);
     final hasDrift = ref.watch(timeDriftDetectedProvider);
+
+    ref.listen<FeatureFlags>(
+      featureFlagsProvider,
+      (previous, next) {
+        if (previous?.homeSuggestionSnoozeEnabled !=
+            next.homeSuggestionSnoozeEnabled) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _snoozeEnabled = next.homeSuggestionSnoozeEnabled;
+          });
+        }
+      },
+      fireImmediately: false,
+    );
 
     final permissionBanner = _buildNotificationPermissionBanner(
       context,

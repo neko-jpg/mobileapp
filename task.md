@@ -5,7 +5,7 @@
 
 まずやるべきこと
 
-[ ]'package:flutter_riverpod/src/consumer.dart': Failed assertion: line 600 pos 7: 'debugDoingBuild': 
+[x]'package:flutter_riverpod/src/consumer.dart': Failed assertion: line 600 pos 7: 'debugDoingBuild':
 
 ref.listen can only be used within the build method of a ConsumerWidget
 
@@ -19,19 +19,19 @@ See also: https://docs.flutter.dev/testing/errors　このエラーを修正し�
 ログデータの永続化、同期、および統計表示の基盤構築に関わる P0 必須タスクです。
 
 ログ記録と統計基盤
-[ ] QuestLog 保存（Record → Isar）：ユーザーの記録データをローカルDB (Isar) に保存するパイプラインを実装する。
+[x] QuestLog 保存（Record → Isar）：ユーザーの記録データをローカルDB (Isar) に保存するパイプラインを実装する。
 
-[ ] 同期（Isar → Firestore）：ローカルの QuestLog をクラウドDB (Firestore) に同期するロジックを実装する。
+[x] 同期（Isar → Firestore）：ローカルの QuestLog をクラウドDB (Firestore) に同期するロジックを実装する。
 
-[ ] 再起動後に反映確認：アプリの再起動後、データがローカルとクラウドの両方で正しく保持・反映されていることを確認する。
+[x] 再起動後に反映確認：アプリの再起動後、データがローカルとクラウドの両方で正しく保持・反映されていることを確認する。
 
-[ ] Stats 実データ化：統計画面（Stats）の表示をダミーデータではなく、実際の QuestLog データに基づいたものにする。
+[x] Stats 実データ化：統計画面（Stats）の表示をダミーデータではなく、実際の QuestLog データに基づいたものにする。
 
-[ ] Heatmap/Streak を QuestLogRepository 直結：ヒートマップおよびストリークの算出ロジックをデータリポジトリに直結させる。
+[x] Heatmap/Streak を QuestLogRepository 直結：ヒートマップおよびストリークの算出ロジックをデータリポジトリに直結させる。
 
-[ ] ローディング/エラー表示の分岐：データ取得中（ローディング）および取得失敗時（エラー）のUI表示分岐を実装する。
+[x] ローディング/エラー表示の分岐：データ取得中（ローディング）および取得失敗時（エラー）のUI表示分岐を実装する。
 
-[ ]モックデータをすべてなくし動的データへと書き換える
+[x]モックデータをすべてなくし動的データへと書き換える
 
 🔔 通知・権限 UX および国際化 (i18n)
 ユーザー体験に直結する通知と、多言語対応の完了を目指します。
