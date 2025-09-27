@@ -7,6 +7,7 @@ import 'package:minq/data/providers.dart';
 import 'package:minq/domain/config/feature_flags.dart';
 import 'package:minq/presentation/common/debouncer.dart';
 import 'package:minq/presentation/common/minq_copy.dart';
+import 'package:minq/presentation/common/notification_permission_flow.dart';
 import 'package:minq/presentation/common/minq_empty_state.dart';
 import 'package:minq/presentation/common/minq_skeleton.dart';
 import 'package:minq/presentation/theme/minq_theme.dart';
@@ -38,53 +39,6 @@ class QuestSuggestion {
   final IconData icon;
 }
 
-final List<Quest> _todayQuests = <Quest>[
-  const Quest(
-    title: 'Read 1 page of a book',
-    subtitle: 'Learning',
-    icon: Icons.auto_stories,
-  ),
-  const Quest(
-    title: 'Do 5 push-ups',
-    subtitle: 'Exercise',
-    icon: Icons.fitness_center,
-    isCompleted: true,
-  ),
-  const Quest(
-    title: 'Tidy one surface',
-    subtitle: 'Tidying',
-    icon: Icons.countertops,
-  ),
-];
-
-final List<QuestSuggestion> _suggestionPool = <QuestSuggestion>[
-  const QuestSuggestion(
-    title: 'Deep breathing',
-    subtitle: '1 minute • Calm mind',
-    icon: Icons.self_improvement,
-  ),
-  const QuestSuggestion(
-    title: 'Inbox zero',
-    subtitle: '5 emails • Focus',
-    icon: Icons.mail_outline,
-  ),
-  const QuestSuggestion(
-    title: 'Stretch break',
-    subtitle: '2 minutes • Mobility',
-    icon: Icons.accessibility_new,
-  ),
-  const QuestSuggestion(
-    title: 'Water reminder',
-    subtitle: '1 glass • Hydration',
-    icon: Icons.local_drink_outlined,
-  ),
-  const QuestSuggestion(
-    title: 'Gratitude note',
-    subtitle: '30 seconds • Reflection',
-    icon: Icons.sentiment_satisfied_alt_outlined,
-  ),
-];
-
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -101,6 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _snoozeEnabled = true;
   bool _dismissedPermissionBanner = false;
   bool _dismissedTimeBanner = false;
+  static const int _suggestionPoolLength = 5;
 
   @override
   void initState() {
@@ -116,7 +71,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _swapSuggestion(int slot) {
     setState(() {
-      final nextIndex = (_slotIndices[slot] + 1) % _suggestionPool.length;
+      final nextIndex = (_slotIndices[slot] + 1) % _suggestionPoolLength;
       _slotIndices[slot] = nextIndex;
       _snoozedSlots.remove(slot);
     });
@@ -136,15 +91,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() => _snoozedSlots.remove(slot));
   }
 
-  QuestSuggestion _suggestionFor(int slot) {
-    return _suggestionPool[_slotIndices[slot] % _suggestionPool.length];
+  QuestSuggestion _suggestionFor(List<QuestSuggestion> pool, int slot) {
+    return pool[_slotIndices[slot] % pool.length];
   }
+
+  List<Quest> _buildTodayQuests(AppLocalizations l10n) => <Quest>[
+        Quest(
+          title: l10n.homeQuestReadPageTitle,
+          subtitle: l10n.homeQuestReadPageCategory,
+          icon: Icons.auto_stories,
+        ),
+        Quest(
+          title: l10n.homeQuestPushUpsTitle,
+          subtitle: l10n.homeQuestPushUpsCategory,
+          icon: Icons.fitness_center,
+          isCompleted: true,
+        ),
+        Quest(
+          title: l10n.homeQuestTidySurfaceTitle,
+          subtitle: l10n.homeQuestTidySurfaceCategory,
+          icon: Icons.countertops,
+        ),
+      ];
+
+  List<QuestSuggestion> _buildSuggestionPool(AppLocalizations l10n) =>
+      <QuestSuggestion>[
+        QuestSuggestion(
+          title: l10n.homeSuggestionDeepBreathingTitle,
+          subtitle: l10n.homeSuggestionDeepBreathingSubtitle,
+          icon: Icons.self_improvement,
+        ),
+        QuestSuggestion(
+          title: l10n.homeSuggestionInboxZeroTitle,
+          subtitle: l10n.homeSuggestionInboxZeroSubtitle,
+          icon: Icons.mail_outline,
+        ),
+        QuestSuggestion(
+          title: l10n.homeSuggestionStretchBreakTitle,
+          subtitle: l10n.homeSuggestionStretchBreakSubtitle,
+          icon: Icons.accessibility_new,
+        ),
+        QuestSuggestion(
+          title: l10n.homeSuggestionWaterReminderTitle,
+          subtitle: l10n.homeSuggestionWaterReminderSubtitle,
+          icon: Icons.local_drink_outlined,
+        ),
+        QuestSuggestion(
+          title: l10n.homeSuggestionGratitudeNoteTitle,
+          subtitle: l10n.homeSuggestionGratitudeNoteSubtitle,
+          icon: Icons.sentiment_satisfied_alt_outlined,
+        ),
+      ];
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final l10n = AppLocalizations.of(context)!;
-    final hasQuests = _todayQuests.isNotEmpty;
+    final todayQuests = _buildTodayQuests(l10n);
+    final suggestionPool = _buildSuggestionPool(l10n);
+    final hasQuests = todayQuests.isNotEmpty;
     final startupState = ref.watch(appStartupProvider);
     final permissionGranted = ref.watch(notificationPermissionProvider);
     final hasDrift = ref.watch(timeDriftDetectedProvider);
@@ -168,12 +173,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final permissionBanner = _buildNotificationPermissionBanner(
       context,
       tokens,
+      l10n,
       startupState.isLoading,
       permissionGranted,
     );
     final driftBanner = _buildTimeDriftBanner(
       context,
       tokens,
+      l10n,
       startupState.isLoading,
       hasDrift,
     );
@@ -203,7 +210,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           leading:
                               Icon(Icons.info_outline, color: tokens.brandPrimary),
                           title: Text(
-                            '毎日3つのQuestをこなして、PairとHigh-fiveを送り合おう！',
+                            l10n.homeHelpBannerMessage,
                             style: tokens.bodySmall
                                 .copyWith(color: tokens.textPrimary),
                           ),
@@ -238,7 +245,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
                   if (hasQuests)
-                    ..._todayQuests
+                    ...todayQuests
                         .map((Quest quest) => _QuestCard(quest: quest)),
                 ],
               ),
@@ -264,7 +271,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 SizedBox(height: tokens.spacing(1)),
                 Text(
-                  MinqCopy.valuePropositionSubheadline,
+                  MinqCopy.valuePropositionSubheadline(l10n),
                   style: tokens.bodyMedium.copyWith(color: tokens.textMuted),
                 ),
               ],
@@ -313,7 +320,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SizedBox(height: tokens.spacing(4)),
           ...List<Widget>.generate(3, (int slot) {
             final snoozed = _snoozedSlots.contains(slot);
-            final suggestion = _suggestionFor(slot);
+            final suggestion = _suggestionFor(suggestionPool, slot);
             return _SuggestionCard(
               suggestion: suggestion,
               snoozed: snoozed,
@@ -332,6 +339,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget? _buildNotificationPermissionBanner(
     BuildContext context,
     MinqTheme tokens,
+    AppLocalizations l10n,
     bool startupLoading,
     bool permissionGranted,
   ) {
@@ -360,13 +368,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          MinqCopy.notificationPermissionBannerTitle,
+                          MinqCopy.notificationPermissionBannerTitle(l10n),
                           style: tokens.titleSmall
                               .copyWith(color: tokens.textPrimary),
                         ),
                         SizedBox(height: tokens.spacing(1)),
                         Text(
-                          MinqCopy.notificationPermissionBannerBody,
+                          MinqCopy.notificationPermissionBannerBody(l10n),
                           style: tokens.bodySmall
                               .copyWith(color: tokens.textMuted),
                         ),
@@ -384,13 +392,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       backgroundColor: tokens.brandPrimary,
                       foregroundColor: tokens.surface,
                     ),
-                    child: const Text('Enable notifications'),
+                    child: Text(l10n.notificationPermissionPrimaryAction),
                   ),
                   SizedBox(width: tokens.spacing(3)),
                   TextButton(
                     onPressed: () =>
                         setState(() => _dismissedPermissionBanner = true),
-                    child: const Text('Dismiss'),
+                    child: Text(l10n.commonDismiss),
                   ),
                 ],
               ),
@@ -404,6 +412,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget? _buildTimeDriftBanner(
     BuildContext context,
     MinqTheme tokens,
+    AppLocalizations l10n,
     bool startupLoading,
     bool hasDrift,
   ) {
@@ -431,13 +440,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          MinqCopy.timeDriftBannerTitle,
+                          MinqCopy.timeDriftBannerTitle(l10n),
                           style: tokens.titleSmall
                               .copyWith(color: tokens.textPrimary),
                         ),
                         SizedBox(height: tokens.spacing(1)),
                         Text(
-                          MinqCopy.timeDriftBannerBody,
+                          MinqCopy.timeDriftBannerBody(l10n),
                           style: tokens.bodySmall
                               .copyWith(color: tokens.textMuted),
                         ),
@@ -457,12 +466,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       backgroundColor: tokens.brandPrimary,
                       foregroundColor: tokens.surface,
                     ),
-                    child: const Text('View fix steps'),
+                    child: Text(l10n.timeDriftBannerPrimaryAction),
                   ),
                   SizedBox(width: tokens.spacing(3)),
                   TextButton(
                     onPressed: () => setState(() => _dismissedTimeBanner = true),
-                    child: const Text('Dismiss'),
+                    child: Text(l10n.commonDismiss),
                   ),
                 ],
               ),
@@ -475,23 +484,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _requestNotificationPermission() async {
     final granted =
-        await ref.read(notificationServiceProvider).requestPermission();
-    ref.read(notificationPermissionProvider.notifier).state = granted;
+        await runNotificationPermissionFlow(context: context, ref: ref);
     if (!mounted) {
       return;
     }
-    final messenger = ScaffoldMessenger.of(context);
     if (granted) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Notifications enabled.')),
-      );
       setState(() => _dismissedPermissionBanner = true);
-      ref.invalidate(appStartupProvider);
-      unawaited(ref.read(appStartupProvider.future));
-    } else {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Permission still disabled.')),
-      );
     }
   }
 
