@@ -11,8 +11,11 @@ import 'package:minq/presentation/theme/minq_theme.dart';
 final userPairProvider = StreamProvider<Pair?>((ref) {
   final uid = ref.watch(uidProvider);
   if (uid == null) return Stream.value(null);
-  // TODO: Handle null repository gracefully
-  return ref.watch(pairRepositoryProvider)!.getPairStreamForUser(uid);
+  final repository = ref.watch(pairRepositoryProvider);
+  if (repository == null) {
+    return const Stream<Pair?>.empty();
+  }
+  return repository.getPairStreamForUser(uid);
 });
 
 class PairScreen extends ConsumerWidget {
@@ -56,8 +59,12 @@ class _PairedView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tokens = context.tokens;
-    // TODO: Handle null repository gracefully
-    final pairStream = ref.watch(pairRepositoryProvider)!.getPairStream(pairId);
+    final repository = ref.watch(pairRepositoryProvider);
+    if (repository == null) {
+      return const Center(child: Text('Pair data is unavailable while offline.'));
+    }
+
+    final pairStream = repository.getPairStream(pairId);
 
     return StreamBuilder<DocumentSnapshot>(
       stream: pairStream,
@@ -91,8 +98,16 @@ class _PairedView extends ConsumerWidget {
                 onPressed: canHighFive ? () async {
                   final uid = ref.read(uidProvider);
                   if (uid == null) return;
-                  // TODO: Handle null repository gracefully
-                  await ref.read(pairRepositoryProvider)!.sendHighFive(pairId, uid);
+                  final repository = ref.read(pairRepositoryProvider);
+                  if (repository == null) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Pair actions are unavailable offline.')),
+                      );
+                    }
+                    return;
+                  }
+                  await repository.sendHighFive(pairId, uid);
                 } : null,
               ),
               SizedBox(height: tokens.spacing(10)),
@@ -103,10 +118,22 @@ class _PairedView extends ConsumerWidget {
                 runSpacing: tokens.spacing(3),
                 alignment: WrapAlignment.center,
                 children: [
-                  _QuickMessageChip(text: "You're doing great!", onTap: () => _sendQuickMessage(ref, pairId, "You're doing great!")),
-                  _QuickMessageChip(text: 'Keep it up!', onTap: () => _sendQuickMessage(ref, pairId, 'Keep it up!')),
-                  _QuickMessageChip(text: "Let's finish strong.", onTap: () => _sendQuickMessage(ref, pairId, "Let's finish strong.")),
-                  _QuickMessageChip(text: 'I completed my goal!', onTap: () => _sendQuickMessage(ref, pairId, 'I completed my goal!')),
+                  _QuickMessageChip(
+                    text: "You're doing great!",
+                    onTap: () => _sendQuickMessage(context, ref, pairId, "You're doing great!"),
+                  ),
+                  _QuickMessageChip(
+                    text: 'Keep it up!',
+                    onTap: () => _sendQuickMessage(context, ref, pairId, 'Keep it up!'),
+                  ),
+                  _QuickMessageChip(
+                    text: "Let's finish strong.",
+                    onTap: () => _sendQuickMessage(context, ref, pairId, "Let's finish strong."),
+                  ),
+                  _QuickMessageChip(
+                    text: 'I completed my goal!',
+                    onTap: () => _sendQuickMessage(context, ref, pairId, 'I completed my goal!'),
+                  ),
                 ],
               ),
             ],
@@ -116,11 +143,24 @@ class _PairedView extends ConsumerWidget {
     );
   }
 
-  void _sendQuickMessage(WidgetRef ref, String pairId, String message) async {
+  void _sendQuickMessage(
+    BuildContext context,
+    WidgetRef ref,
+    String pairId,
+    String message,
+  ) async {
     final uid = ref.read(uidProvider);
     if (uid == null) return;
-    // TODO: Handle null repository gracefully
-    await ref.read(pairRepositoryProvider)!.sendQuickMessage(pairId, uid, message);
+    final repository = ref.read(pairRepositoryProvider);
+    if (repository == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to send messages while offline.')),
+        );
+      }
+      return;
+    }
+    await repository.sendQuickMessage(pairId, uid, message);
   }
 }
 
@@ -166,8 +206,14 @@ class _UnpairedViewState extends ConsumerState<_UnpairedView> {
     final uid = ref.read(uidProvider);
     if (uid == null) return;
 
-    // TODO: Handle null repository gracefully
-    final pairId = await ref.read(pairRepositoryProvider)!.joinByInvitation(code, uid);
+    final repository = ref.read(pairRepositoryProvider);
+    if (repository == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pairing requires an internet connection.')),
+      );
+      return;
+    }
+    final pairId = await repository.joinByInvitation(code, uid);
     if (mounted && pairId == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid invite code.')));
     }
@@ -177,8 +223,14 @@ class _UnpairedViewState extends ConsumerState<_UnpairedView> {
     final uid = ref.read(uidProvider);
     if (uid == null) return;
 
-    // TODO: Handle null repository gracefully
-    final pairId = await ref.read(pairRepositoryProvider)!.requestRandomPair(uid, _selectedCategory);
+    final repository = ref.read(pairRepositoryProvider);
+    if (repository == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pairing requires an internet connection.')),
+      );
+      return;
+    }
+    final pairId = await repository.requestRandomPair(uid, _selectedCategory);
     if (mounted && pairId == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No partner found yet. You have been added to the queue.')));
     }

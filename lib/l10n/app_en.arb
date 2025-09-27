@@ -37,6 +37,7 @@
   "homeHelpBannerMessage": "Complete three quests each day and swap High-fives with your pair!",
   "notificationPermissionPrimaryAction": "Enable notifications",
   "commonDismiss": "Dismiss",
+  "completedQuestSemanticLabel": "Completed quest indicator",
   "timeDriftBannerPrimaryAction": "View fix steps",
   "notificationPermissionGranted": "Notifications enabled.",
   "notificationPermissionDenied": "Notification permission is still disabled.",

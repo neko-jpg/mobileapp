@@ -48,7 +48,17 @@ class _CreateQuestScreenState extends ConsumerState<CreateQuestScreen> {
         ..status = QuestStatus.active
         ..createdAt = DateTime.now();
 
-      await ref.read(questRepositoryProvider).addQuest(newQuest);
+      final repository = ref.read(questRepositoryProvider);
+      if (repository == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Storage is not ready yet. Please try again shortly.')),
+          );
+        }
+        return;
+      }
+
+      await repository.addQuest(newQuest);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

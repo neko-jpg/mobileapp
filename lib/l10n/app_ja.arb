@@ -37,6 +37,7 @@
   "homeHelpBannerMessage": "毎日3つのQuestをこなして、ペアとHigh-fiveを送り合おう！",
   "notificationPermissionPrimaryAction": "通知を有効にする",
   "commonDismiss": "閉じる",
+  "completedQuestSemanticLabel": "完了したクエストの表示",
   "timeDriftBannerPrimaryAction": "対処方法を見る",
   "notificationPermissionGranted": "通知を有効にしました。",
   "notificationPermissionDenied": "通知はまだ有効になっていません。",

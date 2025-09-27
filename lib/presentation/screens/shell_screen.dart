@@ -44,7 +44,11 @@ class _ShellScreenState extends ConsumerState<ShellScreen> with WidgetsBindingOb
     final uid = ref.read(uidProvider);
     if (uid == null) return;
 
-    final completed = await ref.read(questLogRepositoryProvider).hasCompletedDailyGoal(uid);
+    final logRepository = ref.read(questLogRepositoryProvider);
+    if (logRepository == null) {
+      return;
+    }
+    final completed = await logRepository.hasCompletedDailyGoal(uid);
     if (!completed) {
       await ref.read(notificationServiceProvider).scheduleAuxiliaryReminder('20:30');
     }
@@ -113,26 +117,31 @@ class _ShellScreenState extends ConsumerState<ShellScreen> with WidgetsBindingOb
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
             label: 'Home',
+            tooltip: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart_outlined),
             activeIcon: Icon(Icons.bar_chart),
             label: 'Stats',
+            tooltip: 'Stats',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.groups_outlined),
             activeIcon: Icon(Icons.groups),
             label: 'Pair',
+            tooltip: 'Pair',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.checklist_outlined),
             activeIcon: Icon(Icons.checklist),
             label: 'Quests',
+            tooltip: 'Quests',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
             activeIcon: Icon(Icons.settings),
             label: 'Settings',
+            tooltip: 'Settings',
           ),
         ],
       ),

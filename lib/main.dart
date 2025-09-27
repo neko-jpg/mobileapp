@@ -47,6 +47,25 @@ class MinQApp extends ConsumerStatefulWidget {
 }
 
 class _MinQAppState extends ConsumerState<MinQApp> {
+  ProviderSubscription<AsyncValue<String>>?
+      _notificationTapSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationTapSubscription = ref.listenManual<AsyncValue<String>>(
+      notificationTapStreamProvider,
+      (previous, next) => _handleNotificationNavigation(next),
+      fireImmediately: false,
+    );
+  }
+
+  @override
+  void dispose() {
+    _notificationTapSubscription?.close();
+    super.dispose();
+  }
+
   void _handleNotificationNavigation(AsyncValue<String> notification) {
     notification.whenData((route) {
       if (route.isNotEmpty) {
@@ -57,11 +76,6 @@ class _MinQAppState extends ConsumerState<MinQApp> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<String>>(
-      notificationTapStreamProvider,
-      (previous, next) => _handleNotificationNavigation(next),
-    );
-
     final appStartupAsyncValue = ref.watch(appStartupProvider);
     final router = ref.watch(routerProvider);
     final locale = ref.watch(appLocaleControllerProvider);
@@ -153,7 +167,7 @@ class _MinQAppState extends ConsumerState<MinQApp> {
           final mediaQuery = MediaQuery.of(context);
           final clampedScaler = mediaQuery.textScaler.clamp(
             minScaleFactor: 1.0,
-            maxScaleFactor: 1.3,
+            maxScaleFactor: 2.0,
           );
           return MediaQuery(
             data: mediaQuery.copyWith(textScaler: clampedScaler),

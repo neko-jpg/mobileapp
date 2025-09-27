@@ -56,17 +56,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _dismissedPermissionBanner = false;
   bool _dismissedTimeBanner = false;
   static const int _suggestionPoolLength = 5;
+  ProviderSubscription<FeatureFlags>? _featureFlagsSubscription;
 
   @override
   void initState() {
     super.initState();
     final flags = ref.read(featureFlagsProvider);
     _snoozeEnabled = flags.homeSuggestionSnoozeEnabled;
+    _featureFlagsSubscription = ref.listenManual<FeatureFlags>(
+      featureFlagsProvider,
+      (previous, next) {
+        if (previous?.homeSuggestionSnoozeEnabled !=
+            next.homeSuggestionSnoozeEnabled) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            _snoozeEnabled = next.homeSuggestionSnoozeEnabled;
+          });
+        }
+      },
+      fireImmediately: false,
+    );
     Future<void>.delayed(const Duration(milliseconds: 600), () {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _featureFlagsSubscription?.close();
+    super.dispose();
   }
 
   void _swapSuggestion(int slot) {
@@ -154,22 +176,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final permissionGranted = ref.watch(notificationPermissionProvider);
     final hasDrift = ref.watch(timeDriftDetectedProvider);
 
-    ref.listen<FeatureFlags>(
-      featureFlagsProvider,
-      (previous, next) {
-        if (previous?.homeSuggestionSnoozeEnabled !=
-            next.homeSuggestionSnoozeEnabled) {
-          if (!mounted) {
-            return;
-          }
-          setState(() {
-            _snoozeEnabled = next.homeSuggestionSnoozeEnabled;
-          });
-        }
-      },
-      fireImmediately: false,
-    );
-
     final permissionBanner = _buildNotificationPermissionBanner(
       context,
       tokens,
@@ -207,8 +213,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         shape: RoundedRectangleBorder(
                             borderRadius: tokens.cornerLarge()),
                         child: ListTile(
-                          leading:
-                              Icon(Icons.info_outline, color: tokens.brandPrimary),
+                          leading: Icon(
+                            Icons.info_outline,
+                            color: tokens.brandPrimary,
+                            semanticLabel: l10n.homeHelpBannerMessage,
+                          ),
                           title: Text(
                             l10n.homeHelpBannerMessage,
                             style: tokens.bodySmall
@@ -613,6 +622,7 @@ class _SuggestionCard extends StatelessWidget {
                         suggestion.icon,
                         color: tokens.brandPrimary,
                         size: tokens.spacing(6),
+                        semanticLabel: suggestion.title,
                       ),
                     ),
                     SizedBox(width: tokens.spacing(4)),
@@ -670,6 +680,7 @@ class _QuestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return InkWell(
       onTap: () => context.go('/record'),
@@ -704,6 +715,7 @@ class _QuestCard extends StatelessWidget {
                 quest.icon,
                 color: tokens.brandPrimary,
                 size: tokens.spacing(7),
+                semanticLabel: quest.title,
               ),
             ),
             SizedBox(width: tokens.spacing(4)),
@@ -753,6 +765,7 @@ class _QuestCard extends StatelessWidget {
                         Icons.check,
                         color: tokens.surface,
                         size: tokens.spacing(4),
+                        semanticLabel: l10n.completedQuestSemanticLabel,
                       )
                       : null,
             ),

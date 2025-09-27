@@ -31,6 +31,8 @@ jobs:
           flutter-version: stable
       - name: Install dependencies
         run: flutter pub get
+      - name: Check dependency updates
+        run: flutter pub outdated --mode=null-safety
       - name: Dependency guard
         run: dart run tool/dep_guard.dart
       - name: TLS guard
