@@ -17,6 +17,7 @@ class NotificationService {
   static const int _recurringNotificationBaseId = 200;
   static const int _auxiliaryNotificationId = 300;
   static const int _snoozeNotificationId = 400;
+  static const int _testNotificationId = 500;
   static const String _recordRoutePayload = '/record';
   static const Duration _minimumGap = Duration(minutes: 10);
 
@@ -200,6 +201,33 @@ class NotificationService {
       suspended: false,
     );
     await _persistState();
+  }
+
+  Future<void> showTestNotification({
+    required String title,
+    required String body,
+    required String channelName,
+    required String channelDescription,
+  }) async {
+    if (!_supportsLocalNotifications) {
+      return;
+    }
+
+    await _plugin.show(
+      _testNotificationId,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'minq_test_channel',
+          channelName,
+          channelDescription: channelDescription,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      payload: _recordRoutePayload,
+    );
   }
 
   Future<void> _handleSnooze(String actionId, String? payload) async {

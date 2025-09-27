@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:minq/data/providers.dart';
 import 'package:minq/presentation/common/minq_copy.dart';
+import 'package:minq/presentation/common/notification_permission_flow.dart';
 import 'package:minq/presentation/theme/minq_theme.dart';
 
 class OnboardingSlide {
@@ -11,35 +15,35 @@ class OnboardingSlide {
   });
 
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String Function(AppLocalizations) title;
+  final String Function(AppLocalizations) subtitle;
 }
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   late final PageController _pageController;
   int _currentPage = 0;
 
   static const List<OnboardingSlide> _slides = <OnboardingSlide>[
     OnboardingSlide(
       icon: Icons.flag_circle_outlined,
-      title: 'Mini-quests that stick',
+      title: _onboardingMiniQuestTitle,
       subtitle: MinqCopy.onboardingFeatureMiniQuest,
     ),
     OnboardingSlide(
       icon: Icons.groups,
-      title: 'Anonymous accountability',
+      title: _onboardingAccountabilityTitle,
       subtitle: MinqCopy.onboardingFeatureAnonymousPair,
     ),
     OnboardingSlide(
       icon: Icons.notifications_active_outlined,
-      title: 'Smart reminders (optional)',
+      title: _onboardingSmartRemindersTitle,
       subtitle: MinqCopy.onboardingFeatureNotifications,
     ),
   ];
@@ -56,7 +60,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  void _handleNext() {
+  Future<void> _handleNext() async {
     if (_currentPage < _slides.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 280),
@@ -64,55 +68,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
       return;
     }
-    _showNotificationPrePrompt();
-  }
-
-  Future<void> _showNotificationPrePrompt() async {
-    final tokens = context.tokens;
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: tokens.surface,
-      shape: RoundedRectangleBorder(borderRadius: tokens.cornerLarge()),
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            tokens.spacing(6),
-            tokens.spacing(6),
-            tokens.spacing(6),
-            tokens.spacing(8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                MinqCopy.notificationPrePromptTitle,
-                style: tokens.titleSmall.copyWith(color: tokens.textPrimary),
-              ),
-              SizedBox(height: tokens.spacing(3)),
-              Text(
-                MinqCopy.notificationPrePromptBody,
-                style: tokens.bodySmall.copyWith(color: tokens.textMuted),
-              ),
-              SizedBox(height: tokens.spacing(5)),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  minimumSize: Size(double.infinity, tokens.spacing(12)),
-                  backgroundColor: tokens.brandPrimary,
-                  foregroundColor: tokens.surface,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: tokens.cornerLarge(),
-                  ),
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Sounds good'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    if (!mounted) return;
+    await runNotificationPermissionFlow(context: context, ref: ref);
+    if (!mounted) {
+      return;
+    }
     context.go('/login');
   }
 
@@ -123,6 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: tokens.background,
@@ -139,7 +99,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _handleSkip,
-                  child: const Text('スキップ'),
+                  child: Text(l10n.onboardingSkipButton),
                 ),
               ),
             ),
@@ -176,7 +136,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     onPressed: _handleNext,
                     child: Text(
-                      _currentPage == _slides.length - 1 ? '通知を設定して続ける' : '次へ',
+                      _currentPage == _slides.length - 1
+                          ? l10n.onboardingContinueButton
+                          : l10n.onboardingNextButton,
                     ),
                   ),
                   SizedBox(height: tokens.spacing(4)),
@@ -198,6 +160,7 @@ class _OnboardingSlideView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final l10n = AppLocalizations.of(context)!;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: tokens.spacing(6)),
@@ -220,13 +183,13 @@ class _OnboardingSlideView extends StatelessWidget {
           ),
           SizedBox(height: tokens.spacing(6)),
           Text(
-            slide.title,
+            slide.title(l10n),
             textAlign: TextAlign.center,
             style: tokens.titleMedium.copyWith(color: tokens.textPrimary),
           ),
           SizedBox(height: tokens.spacing(3)),
           Text(
-            slide.subtitle,
+            slide.subtitle(l10n),
             textAlign: TextAlign.center,
             style: tokens.bodyMedium.copyWith(color: tokens.textMuted),
           ),
@@ -259,10 +222,9 @@ class _OnboardingIndicator extends StatelessWidget {
           height: tokens.spacing(2),
           width: isActive ? tokens.spacing(6) : tokens.spacing(2.5),
           decoration: BoxDecoration(
-            color:
-                isActive
-                    ? tokens.brandPrimary
-                    : tokens.brandPrimary.withValues(alpha: 0.25),
+            color: isActive
+                ? tokens.brandPrimary
+                : tokens.brandPrimary.withValues(alpha: 0.25),
             borderRadius: tokens.cornerSmall(),
           ),
         );
@@ -270,3 +232,12 @@ class _OnboardingIndicator extends StatelessWidget {
     );
   }
 }
+
+String _onboardingMiniQuestTitle(AppLocalizations l10n) =>
+    l10n.onboardingMiniQuestTitle;
+
+String _onboardingAccountabilityTitle(AppLocalizations l10n) =>
+    l10n.onboardingAccountabilityTitle;
+
+String _onboardingSmartRemindersTitle(AppLocalizations l10n) =>
+    l10n.onboardingSmartRemindersTitle;
