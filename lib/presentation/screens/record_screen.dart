@@ -225,6 +225,8 @@ class _RecordForm extends ConsumerWidget {
         ..proofValue = result.path
         ..synced = false;
       await ref.read(questLogRepositoryProvider).addLog(log);
+      await _refreshQuestData(ref);
+      await _syncQuestLogs(ref, uid);
       onError(RecordErrorType.none);
       if (context.mounted) context.go('/celebration');
     } on PhotoCaptureException catch (error) {
@@ -242,14 +244,43 @@ class _RecordForm extends ConsumerWidget {
   }
 
   Future<void> _handleSelfDeclareTap(BuildContext context, WidgetRef ref) async {
+    final uid = ref.read(uidProvider) ?? '';
     final log = QuestLog()
-      ..uid = ref.read(uidProvider) ?? ''
+      ..uid = uid
       ..questId = questId
       ..ts = DateTime.now().toUtc()
       ..proofType = ProofType.check
       ..synced = false;
     await ref.read(questLogRepositoryProvider).addLog(log);
+    await _refreshQuestData(ref);
+    if (uid.isNotEmpty) {
+      await _syncQuestLogs(ref, uid);
+    }
     if (context.mounted) context.go('/celebration');
+  }
+
+  Future<void> _refreshQuestData(WidgetRef ref) async {
+    ref.invalidate(recentLogsProvider);
+    ref.invalidate(heatmapDataProvider);
+    ref.invalidate(streakProvider);
+    ref.invalidate(longestStreakProvider);
+    ref.invalidate(todayCompletionCountProvider);
+  }
+
+  Future<void> _syncQuestLogs(WidgetRef ref, String uid) async {
+    final syncService = ref.read(firestoreSyncServiceProvider);
+    if (syncService == null) {
+      return;
+    }
+    try {
+      await syncService.syncQuestLogs(uid);
+    } catch (error, stackTrace) {
+      MinqLogger.error(
+        'quest_log_sync_failed',
+        metadata: {'uid': uid, 'error': error.toString()},
+        stackTrace: stackTrace,
+      );
+    }
   }
 }
 

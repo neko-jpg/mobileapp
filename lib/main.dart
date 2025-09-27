@@ -46,25 +46,6 @@ class MinQApp extends ConsumerStatefulWidget {
 }
 
 class _MinQAppState extends ConsumerState<MinQApp> {
-  late final ProviderSubscription<AsyncValue<String>> _notificationTapSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    // React to notification taps emitted by the native layer.
-    _notificationTapSubscription = ref.listenManual<AsyncValue<String>>(
-      notificationTapStreamProvider,
-      (previous, next) => _handleNotificationNavigation(next),
-    );
-    _handleNotificationNavigation(_notificationTapSubscription.read());
-  }
-
-  @override
-  void dispose() {
-    _notificationTapSubscription.close();
-    super.dispose();
-  }
-
   void _handleNotificationNavigation(AsyncValue<String> notification) {
     notification.whenData((route) {
       if (route.isNotEmpty) {
@@ -75,6 +56,11 @@ class _MinQAppState extends ConsumerState<MinQApp> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<String>>(
+      notificationTapStreamProvider,
+      (previous, next) => _handleNotificationNavigation(next),
+    );
+
     final appStartupAsyncValue = ref.watch(appStartupProvider);
     final router = ref.watch(routerProvider);
     final locale = ref.watch(appLocaleControllerProvider);
