@@ -101,37 +101,49 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(ref.watch(firebaseAuthProvider));
 });
 
-QuestRepository _buildQuestRepository(Ref ref) {
-  final isar = ref.watch(isarProvider).value;
-  if (isar == null) {
-    throw StateError('Isar instance is not yet initialised');
-  }
-  return QuestRepository(isar);
+QuestRepository? _buildQuestRepository(Ref ref) {
+  final asyncIsar = ref.watch(isarProvider);
+  return asyncIsar.when(
+    data: QuestRepository.new,
+    loading: () => null,
+    error: (error, stackTrace) {
+      debugPrint('Quest repository unavailable: $error');
+      return null;
+    },
+  );
 }
 
-QuestLogRepository _buildQuestLogRepository(Ref ref) {
-  final isar = ref.watch(isarProvider).value;
-  if (isar == null) {
-    throw StateError('Isar instance is not yet initialised');
-  }
-  return QuestLogRepository(isar);
+QuestLogRepository? _buildQuestLogRepository(Ref ref) {
+  final asyncIsar = ref.watch(isarProvider);
+  return asyncIsar.when(
+    data: QuestLogRepository.new,
+    loading: () => null,
+    error: (error, stackTrace) {
+      debugPrint('Quest log repository unavailable: $error');
+      return null;
+    },
+  );
 }
 
-UserRepository _buildUserRepository(Ref ref) {
-  final isar = ref.watch(isarProvider).value;
-  if (isar == null) {
-    throw StateError('Isar instance is not yet initialised');
-  }
-  return UserRepository(isar);
+UserRepository? _buildUserRepository(Ref ref) {
+  final asyncIsar = ref.watch(isarProvider);
+  return asyncIsar.when(
+    data: UserRepository.new,
+    loading: () => null,
+    error: (error, stackTrace) {
+      debugPrint('User repository unavailable: $error');
+      return null;
+    },
+  );
 }
 
-final questRepositoryProvider = Provider<QuestRepository>(
+final questRepositoryProvider = Provider<QuestRepository?>(
   _buildQuestRepository,
 );
-final questLogRepositoryProvider = Provider<QuestLogRepository>(
+final questLogRepositoryProvider = Provider<QuestLogRepository?>(
   _buildQuestLogRepository,
 );
-final userRepositoryProvider = Provider<UserRepository>(_buildUserRepository);
+final userRepositoryProvider = Provider<UserRepository?>(_buildUserRepository);
 
 final pairRepositoryProvider = Provider<PairRepository?>((ref) {
   final firestore = ref.watch(firestoreProvider);
@@ -146,14 +158,15 @@ final firestoreSyncServiceProvider = Provider<FirestoreSyncService?>((ref) {
   if (firestore == null) {
     return null;
   }
-  final isar = ref.watch(isarProvider).value;
-  if (isar == null) {
-    throw StateError('Isar instance is not yet initialised');
+  final isarValue = ref.watch(isarProvider).value;
+  final questLogRepository = ref.watch(questLogRepositoryProvider);
+  if (isarValue == null || questLogRepository == null) {
+    return null;
   }
   return FirestoreSyncService(
     firestore,
-    ref.watch(questLogRepositoryProvider),
-    isar,
+    questLogRepository,
+    isarValue,
   );
 });
 
@@ -163,7 +176,8 @@ final appStartupProvider = FutureProvider<void>((ref) async {
   ref.read(notificationPermissionProvider.notifier).state = permissionGranted;
 
   await ref.watch(isarProvider.future);
-  await ref.read(questRepositoryProvider).seedInitialQuests();
+  final questRepository = ref.read(questRepositoryProvider);
+  await questRepository?.seedInitialQuests();
 
   final firebaseAvailable = ref.watch(firebaseAvailabilityProvider);
   if (!firebaseAvailable) {
@@ -178,6 +192,10 @@ final appStartupProvider = FutureProvider<void>((ref) async {
   }
 
   final userRepo = ref.read(userRepositoryProvider);
+  if (userRepo == null) {
+    debugPrint('User repository unavailable; aborting startup.');
+    return;
+  }
   var localUser = await userRepo.getLocalUser(firebaseUser.uid);
   if (localUser == null) {
     localUser =
@@ -211,6 +229,10 @@ final appStartupProvider = FutureProvider<void>((ref) async {
   }
 
   final logRepo = ref.read(questLogRepositoryProvider);
+  if (logRepo == null) {
+    debugPrint('Quest log repository unavailable; skipping streak calculations.');
+    return;
+  }
   final currentStreak = await logRepo.calculateStreak(localUser.uid);
   final longestStreak = await logRepo.calculateLongestStreak(localUser.uid);
   final previousLongest = localUser.longestStreak;
@@ -245,9 +267,7 @@ final appStartupProvider = FutureProvider<void>((ref) async {
     }
 
     if (auxiliaryTime != null) {
-      final hasCompleted = await ref
-          .read(questLogRepositoryProvider)
-          .hasCompletedDailyGoal(localUser.uid);
+      final hasCompleted = await logRepo.hasCompletedDailyGoal(localUser.uid);
       if (hasCompleted) {
         await notifications.cancelAuxiliaryReminder();
       } else {
@@ -301,7 +321,11 @@ final localUserProvider = FutureProvider<minq_user.User?>((ref) async {
       if (firebaseUser == null) {
         return null;
       }
-      return ref.watch(userRepositoryProvider).getLocalUser(firebaseUser.uid);
+      final repository = ref.watch(userRepositoryProvider);
+      if (repository == null) {
+        return null;
+      }
+      return repository.getLocalUser(firebaseUser.uid);
     },
     error: (_, __) => Future.value(null),
     loading: () => Future.value(null),
@@ -352,12 +376,20 @@ Future<void> _ensureStartup(Ref ref) async {
 
 final allQuestsProvider = FutureProvider<List<Quest>>((ref) async {
   await _ensureStartup(ref);
-  return ref.read(questRepositoryProvider).getAllQuests();
+  final repository = ref.read(questRepositoryProvider);
+  if (repository == null) {
+    return const <Quest>[];
+  }
+  return repository.getAllQuests();
 });
 
 final templateQuestsProvider = FutureProvider<List<Quest>>((ref) async {
   await _ensureStartup(ref);
-  return ref.read(questRepositoryProvider).getTemplateQuests();
+  final repository = ref.read(questRepositoryProvider);
+  if (repository == null) {
+    return const <Quest>[];
+  }
+  return repository.getTemplateQuests();
 });
 
 final userQuestsProvider = FutureProvider<List<Quest>>((ref) async {
@@ -366,11 +398,19 @@ final userQuestsProvider = FutureProvider<List<Quest>>((ref) async {
   if (user == null) {
     return [];
   }
-  return ref.read(questRepositoryProvider).getQuestsForOwner(user.uid);
+  final repository = ref.read(questRepositoryProvider);
+  if (repository == null) {
+    return const <Quest>[];
+  }
+  return repository.getQuestsForOwner(user.uid);
 });
 final questByIdProvider = FutureProvider.family<Quest?, int>((ref, id) async {
   await _ensureStartup(ref);
-  return ref.read(questRepositoryProvider).getQuestById(id);
+  final repository = ref.read(questRepositoryProvider);
+  if (repository == null) {
+    return null;
+  }
+  return repository.getQuestById(id);
 });
 
 final streakProvider = FutureProvider<int>((ref) async {
@@ -379,7 +419,11 @@ final streakProvider = FutureProvider<int>((ref) async {
   if (user == null) {
     return 0;
   }
-  return ref.read(questLogRepositoryProvider).calculateStreak(user.uid);
+  final repository = ref.read(questLogRepositoryProvider);
+  if (repository == null) {
+    return 0;
+  }
+  return repository.calculateStreak(user.uid);
 });
 
 final longestStreakProvider = FutureProvider<int>((ref) async {
@@ -388,7 +432,11 @@ final longestStreakProvider = FutureProvider<int>((ref) async {
   if (user == null) {
     return 0;
   }
-  return ref.read(questLogRepositoryProvider).calculateLongestStreak(user.uid);
+  final repository = ref.read(questLogRepositoryProvider);
+  if (repository == null) {
+    return 0;
+  }
+  return repository.calculateLongestStreak(user.uid);
 });
 
 final todayCompletionCountProvider = FutureProvider<int>((ref) async {
@@ -397,9 +445,11 @@ final todayCompletionCountProvider = FutureProvider<int>((ref) async {
   if (user == null) {
     return 0;
   }
-  return ref
-      .read(questLogRepositoryProvider)
-      .countLogsForDay(user.uid, DateTime.now());
+  final repository = ref.read(questLogRepositoryProvider);
+  if (repository == null) {
+    return 0;
+  }
+  return repository.countLogsForDay(user.uid, DateTime.now());
 });
 
 final recentLogsProvider = FutureProvider<List<QuestLog>>((ref) async {
@@ -408,9 +458,11 @@ final recentLogsProvider = FutureProvider<List<QuestLog>>((ref) async {
   if (user == null) {
     return [];
   }
-  final logs = await ref
-      .read(questLogRepositoryProvider)
-      .getLogsForUser(user.uid);
+  final repository = ref.read(questLogRepositoryProvider);
+  if (repository == null) {
+    return const <QuestLog>[];
+  }
+  final logs = await repository.getLogsForUser(user.uid);
   return logs.take(30).toList();
 });
 final heatmapDataProvider = FutureProvider<Map<DateTime, int>>((ref) async {
@@ -419,7 +471,11 @@ final heatmapDataProvider = FutureProvider<Map<DateTime, int>>((ref) async {
   if (user == null) {
     return {};
   }
-  return ref.read(questLogRepositoryProvider).getHeatmapData(user.uid);
+  final repository = ref.read(questLogRepositoryProvider);
+  if (repository == null) {
+    return const <DateTime, int>{};
+  }
+  return repository.getHeatmapData(user.uid);
 });
 
 

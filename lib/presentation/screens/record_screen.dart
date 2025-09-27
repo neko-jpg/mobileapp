@@ -224,7 +224,14 @@ class _RecordForm extends ConsumerWidget {
         ..proofType = ProofType.photo
         ..proofValue = result.path
         ..synced = false;
-      await ref.read(questLogRepositoryProvider).addLog(log);
+      final logRepository = ref.read(questLogRepositoryProvider);
+      if (logRepository == null) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Local storage is not ready yet. Please try again.')),
+        );
+        return;
+      }
+      await logRepository.addLog(log);
       await _refreshQuestData(ref);
       await _syncQuestLogs(ref, uid);
       onError(RecordErrorType.none);
@@ -251,7 +258,14 @@ class _RecordForm extends ConsumerWidget {
       ..ts = DateTime.now().toUtc()
       ..proofType = ProofType.check
       ..synced = false;
-    await ref.read(questLogRepositoryProvider).addLog(log);
+    final logRepository = ref.read(questLogRepositoryProvider);
+    if (logRepository == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Local storage is not ready yet. Please try again.')),
+      );
+      return;
+    }
+    await logRepository.addLog(log);
     await _refreshQuestData(ref);
     if (uid.isNotEmpty) {
       await _syncQuestLogs(ref, uid);
